@@ -2,80 +2,100 @@ package persistence
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/application/properties"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/domain/adapters"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/domain/model"
-	adapters2 "github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/integration/adapters"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/integration/dto"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/integration/exceptions"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/application/properties"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/model"
+	adapters2 "github.com/brienze1/crypto-robot-validator/internal/validator/integration/adapters"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/dto"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/exceptions"
+	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
 )
 
 type dynamoDBClientPersistence struct {
-	logger     adapters.LoggerAdapter
-	dynamoDB   adapters2.DynamoDBAdapter
-	timeSource adapters.TimeAdapter
+	logger   adapters.LoggerAdapter
+	dynamoDB adapters2.DynamoDBAdapter
 }
 
-func DynamoDBClientPersistence(logger adapters.LoggerAdapter, dynamoDB adapters2.DynamoDBAdapter, timeSource adapters.TimeAdapter) *dynamoDBClientPersistence {
+// DynamoDBClientPersistence class constructor
+func DynamoDBClientPersistence(logger adapters.LoggerAdapter, dynamoDB adapters2.DynamoDBAdapter) *dynamoDBClientPersistence {
 	return &dynamoDBClientPersistence{
-		logger:     logger,
-		dynamoDB:   dynamoDB,
-		timeSource: timeSource,
+		logger:   logger,
+		dynamoDB: dynamoDB,
 	}
 }
 
-func (d *dynamoDBClientPersistence) GetClients(config *model.ClientSearchConfig) (*[]model.Client, error) {
-	d.logger.Info("Get clients start", config)
-
-	expr, err := expression.NewBuilder().WithFilter(
-		expression.And(
-			expression.Name("active").Equal(expression.Value(config.Active)),
-			expression.Name("locked").Equal(expression.Value(config.Locked)),
-			expression.Name("locked_until").LessThanEqual(expression.Value(d.timeSource.Now())),
-			expression.Name("cash_amount").GreaterThanEqual(expression.Value(config.MinimumCash)),
-			expression.Name("crypto_amount").GreaterThanEqual(expression.Value(config.MinimumCrypto)),
-			expression.Name("sell_on").LessThanEqual(expression.Value(config.SellWeight.Value())),
-			expression.Name("buy_on").LessThanEqual(expression.Value(config.BuyWeight.Value())),
-			expression.Name("symbols").Contains(config.Symbol.Name()),
-		),
-	).Build()
-	if err != nil {
-		return nil, d.abort(err, "DynamoDb expression builder error")
-	}
-
-	result, err := d.dynamoDB.Scan(context.TODO(), &dynamodb.ScanInput{
-		TableName:                 aws.String(properties.Properties().Aws.DynamoDB.ClientTableName),
-		ProjectionExpression:      aws.String("client_id"),
-		FilterExpression:          expr.Filter(),
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
+// GetClient will find model.Client on client DynamoDB repository using clientId as key.
+func (d *dynamoDBClientPersistence) GetClient(clientId string) (*model.Client, custom_error.BaseErrorAdapter) {
+	response, err := d.dynamoDB.GetItem(context.TODO(), &dynamodb.GetItemInput{
+		Key: map[string]types.AttributeValue{
+			"client_id": &types.AttributeValueMemberS{Value: clientId},
+		},
+		TableName: properties.Properties().Aws.DynamoDB.ClientTableName,
 	})
 	if err != nil {
-		return nil, d.abort(err, "DynamoDb scan error")
+		return nil, d.abort(err, "Error while trying to get client.")
 	}
 
-	clientsDto := &[]dto.Client{}
-	clients := &[]model.Client{}
-
-	err = attributevalue.UnmarshalListOfMaps(result.Items, clientsDto)
+	var client *dto.Client
+	err = attributevalue.UnmarshalMap(response.Item, &client)
 	if err != nil {
-		return nil, d.abort(err, "Error while trying to unmarshal dynamoDB result items")
+		return nil, d.abort(err, "Error while trying to unmarshal get client response.")
 	}
 
-	for _, clientDto := range *clientsDto {
-		*clients = append(*clients, *clientDto.ToModel())
-	}
-
-	d.logger.Info("Get clients finished", config, clients)
-	return clients, nil
+	return client.ToModel(), nil
 }
 
-func (d *dynamoDBClientPersistence) abort(err error, message string) error {
-	clientPersistenceError := exceptions.ClientPersistenceError(err, message)
-	d.logger.Error(clientPersistenceError, "Get clients failed: "+message)
-	return clientPersistenceError
+// Lock will update model.Client setting flag locked as true on client DynamoDB repository. Returns error if client is
+// already locked.
+func (d *dynamoDBClientPersistence) Lock(client *model.Client) custom_error.BaseErrorAdapter {
+	client.Lock()
+
+	clientDto := dto.ClientDto(client)
+
+	err := d.update(clientDto)
+	if err != nil {
+		return d.abort(err, "Error while trying to lock client.")
+	}
+
+	return nil
+}
+
+// Unlock will update model.Client setting flag locked as false on client DynamoDB repository.
+func (d *dynamoDBClientPersistence) Unlock(client *model.Client) custom_error.BaseErrorAdapter {
+	client.Unlock()
+
+	clientDto := dto.ClientDto(client)
+
+	err := d.update(clientDto)
+	if err != nil {
+		return d.abort(err, "Error while trying to unlock client.")
+	}
+
+	return nil
+}
+
+func (d *dynamoDBClientPersistence) update(client *dto.Client) custom_error.BaseErrorAdapter {
+	clientInput, err := attributevalue.MarshalMap(client)
+	if err != nil {
+		return d.abort(err, "Error while trying to marshal client.")
+	}
+
+	_, err = d.dynamoDB.PutItem(context.TODO(), &dynamodb.PutItemInput{
+		TableName: properties.Properties().Aws.DynamoDB.ClientTableName,
+		Item:      clientInput,
+	})
+	if err != nil {
+		return d.abort(err, "Error while trying to update client.")
+	}
+
+	return nil
+}
+
+func (d *dynamoDBClientPersistence) abort(err error, message string) custom_error.BaseErrorAdapter {
+	dynamoDBClientPersistenceError := exceptions.DynamoDBClientPersistenceError(err, message)
+	d.logger.Error(dynamoDBClientPersistenceError, "Get clients failed: "+message)
+	return dynamoDBClientPersistenceError
 }

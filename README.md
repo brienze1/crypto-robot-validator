@@ -15,9 +15,17 @@
     2. [Output](#output)
     3. [Persistence](#persistence)
         1. [Client DB](#client-db)
-            1. [Schema](#schema)
-            2. [Operation](#operation)
-            3. [Query](#query)
+            1. [Schema](#client-db-schema)
+            2. [Operation](#client-db-operation)
+            3. [Query](#client-db-query)
+        2. [Operation DB](#operation-db)
+            1. [Schema](#operation-db-schema)
+            2. [Operation](#operation-db-operation)
+            3. [Query](#operation-db-query)
+        3. [Lock DB](#lock-db)
+            1. [Schema](#lock-db-schema)
+            2. [Operation](#lock-db-operation)
+            3. [Query](#lock-db-query)
     4. [Rules](#rules)
     5. [Built With](#built-with)
         1. [Dependencies](#dependencies)
@@ -81,13 +89,13 @@ Example of how the line should look like:
 
 Client DB is the database that contains the client information and configuration needed to trigger the operations.
 
-##### Schema
+##### Client DB Schema
 
 [//]: # (TODO fix schema)
 
 ```json
 {
-  "id": "uuid",
+  "id": "aa324edf-99fa-4a95-b9c4-a588d1ccb441e",
   "active": true,
   "locked_until": "2022-09-17T12:05:07.45066-03:00",
   "locked": false,
@@ -148,16 +156,150 @@ Client DB is the database that contains the client information and configuration
 }
 ```
 
-##### Operation
+##### Client DB Operation
 
 This application supports the following operations to the Client DB:
 
 - Read ops:
     - Used to find clients using client_id
 
-##### Query
+- Write ops:
+    - Used to lock clients using client_id
+
+##### Client DB Query
 
 This is the query used to get clients from DB:
+
+```gotemplate
+    expr, _ := expression.NewBuilder().WithFilter(
+    expression.And(
+    expression.Name("client_id").Equal(expression.Value(client_id))),
+    ),
+    ).Build()
+```
+
+This is the query used to update (lock/unlock) clients:
+
+```gotemplate
+    expr, _ := expression.NewBuilder().WithFilter(
+    expression.And(
+    expression.Name("client_id").Equal(expression.Value(client_id))),
+    ),
+    ).Build()
+```
+
+#### Operation DB
+
+Operation DB is the database that contains the created operation's information.
+
+##### Operation DB Schema
+
+Operation statuses:
+
+- CREATED
+- PENDING
+- COMPLETED
+- ERROR
+
+```json
+{
+  "id": "aa324edf-99fa-4a95-b9c4-a588d1ccb441e",
+  "status": "COMPLETED",
+  "created_at": "2022-09-17T12:05:07.45066-03:00",
+  "expires_at": "2022-09-17T12:05:07.45066-03:00",
+  "completed_at": "2022-09-17T12:05:07.45066-03:00",
+  "locked": false,
+  "quote": "BTC",
+  "base": "BRL",
+  "stop_loss": 50.00,
+  "profit": 1.0,
+  "transactions": [
+    {
+      "type": "BUY",
+      "quote_unitary_value": 100000.00,
+      "quote_amount": 0.001,
+      "base_amount": 100.00,
+      "created_at": "2022-09-17T12:05:07.45066-03:00",
+      "expires_at": "2022-09-17T12:05:07.45066-03:00",
+      "confirmed_at": "2022-09-17T12:05:07.45066-03:00"
+    },
+    {
+      "type": "SELL",
+      "quote_unitary_value": 101000.00,
+      "quote_amount": 0.001,
+      "base_amount": 101.00,
+      "created_at": "2022-09-17T12:05:07.45066-03:00",
+      "expires_at": "2022-09-17T12:05:07.45066-03:00",
+      "confirmed_at": "2022-09-17T12:05:07.45066-03:00"
+    }
+  ]
+}
+```
+
+##### Operation DB Operation
+
+This application supports the following operations to the Client DB:
+
+- Write ops:
+    - Used to create new operations
+
+##### Operation DB Query
+
+This is the query used to create operations in DB:
+
+[//]: # (TODO create query)
+
+```gotemplate
+    expr, _ := expression.NewBuilder().WithFilter(
+    expression.And(
+    expression.Name("client_id").Equal(expression.Value(client_id))),
+    ),
+    ).Build()
+```
+
+#### Lock DB
+
+Lock DB is the database that contains the client_id's locked during execution.
+
+OBS: Redis is used for this DB.
+
+##### Lock DB Schema
+
+This DB uses key value to store validator client_id's locked
+
+```json
+{
+  "VALIDATOR_LOCK_{client_id}": "{client_id}"
+}
+```
+
+##### Lock DB Operation
+
+This application supports the following operations to the Lock DB:
+
+- Read ops:
+    - Used to find locked client_ids
+
+- Write ops:
+    - Used to lock client_ids
+
+##### Lock DB Query
+
+This is the query used to get locked client_id's from DB:
+
+[//]: # (TODO create query)
+
+```gotemplate
+    expr, _ := expression.NewBuilder().WithFilter(
+    expression.And(
+    expression.Name("client_id").Equal(expression.Value(client_id))),
+    ),
+    ).Build()
+```
+
+This is the query used to update (lock/unlock) client_id's from DB:
+
+[//]: # (TODO create query)
 
 ```gotemplate
     expr, _ := expression.NewBuilder().WithFilter(
@@ -172,6 +314,8 @@ This is the query used to get clients from DB:
 Here are some rules that need to be implemented in this application.
 
 Not Implemented:
+
+Client validations:
 
 - Client must be active
 - Client must not be locked
@@ -196,8 +340,21 @@ Not Implemented:
     - `monthly_summary.month` value should be checked to see if current month has changed, in this case, the values
       should be updated to start a new month.
 
-OBS: this application has the ability to lock the client for a predetermined amount of time. (stop loss block for
-example)
+Lock:
+
+- Ids received should be locked on Redis for execution and unlocked after, even if error occurred.
+- Clients should be locked on DynamoDB for execution and unlocked after, if error occurred after DynamoDB lock, clients
+  should be
+  unlocked.
+- If client fails validation `locked_until` value could be set on DynamoDB to lock for an extended amount of time (stop
+  loss block for example)
+
+Operations:
+- Operation should be created with status `CREATED` and it's id should be sent to the SNS topic for later execution.
+- Operation amount should be created using client configuration and Biscoint current unitary value.
+
+Biscoint:
+- Client balance should be validated from Biscoint and updated in DynamoDB clients DB.
 
 ### Built With
 

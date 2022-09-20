@@ -1,22 +1,14 @@
 package model
 
 import (
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/domain/enum/summary"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/enum/operation_type"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/enum/symbol"
 	"time"
 )
 
 type OperationRequest struct {
-	ClientId  string `json:"client_id"`
-	Operation string `json:"operation"`
-	Symbol    string `json:"symbol"`
-	StartTime string `json:"start_time"`
-}
-
-func NewOperationRequest(client Client, summary summary.Summary) *OperationRequest {
-	return &OperationRequest{
-		ClientId:  client.Id,
-		Operation: summary.OperationTypeString(),
-		Symbol:    summary.Name(),
-		StartTime: time.Now().String(),
-	}
+	ClientId  string
+	Operation operation_type.OperationType
+	Symbol    symbol.Symbol
+	StartTime time.Time
 }

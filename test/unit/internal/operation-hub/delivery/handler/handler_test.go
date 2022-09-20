@@ -45,7 +45,7 @@ var (
 	handlerImpl          adapters.HandlerAdapter
 )
 
-func (operationUseCaseMock operationUseCaseMock) TriggerOperations(summary.Summary) error {
+func (operationUseCaseMock operationUseCaseMock) Validate(summary.Summary) error {
 	clientActionsUseCaseCallCounter += 1
 	return operationUseCaseError
 }

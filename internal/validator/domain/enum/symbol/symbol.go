@@ -4,6 +4,7 @@ type Symbol string
 
 const (
 	Bitcoin    Symbol = "BTC"
+	Brl        Symbol = "BRL"
 	BitcoinBRL Symbol = "BTCBRL"
 )
 

@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/application/properties"
-	adapters2 "github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/domain/adapters"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/integration/adapters"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/integration/exceptions"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/application/properties"
+	adapters2 "github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/adapters"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/exceptions"
+	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
 )
 
 type snsEventService struct {
@@ -15,6 +16,7 @@ type snsEventService struct {
 	sns    adapters.SNSAdapter
 }
 
+// SNSEventService constructor for class.
 func SNSEventService(logger adapters2.LoggerAdapter, sns adapters.SNSAdapter) *snsEventService {
 	return &snsEventService{
 		logger: logger,
@@ -22,7 +24,8 @@ func SNSEventService(logger adapters2.LoggerAdapter, sns adapters.SNSAdapter) *s
 	}
 }
 
-func (s *snsEventService) Send(messageObject interface{}) error {
+// Send will create a publish request for AWS SNS topic.
+func (s *snsEventService) Send(messageObject interface{}) custom_error.BaseErrorAdapter {
 	s.logger.Info("Send started", messageObject)
 
 	stringMessage, err := json.Marshal(messageObject)
@@ -45,7 +48,7 @@ func (s *snsEventService) Send(messageObject interface{}) error {
 	return nil
 }
 
-func (s *snsEventService) abort(err error, message string, metadata ...interface{}) error {
+func (s *snsEventService) abort(err error, message string, metadata ...interface{}) custom_error.BaseErrorAdapter {
 	binanceWebServiceError := exceptions.SNSEventServiceError(err, message)
 	s.logger.Error(binanceWebServiceError, "Send failed: "+message, metadata)
 	return binanceWebServiceError

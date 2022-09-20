@@ -5,11 +5,8 @@ import (
 	"encoding/json"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/delivery/dto"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/domain/enum/summary"
+	"github.com/brienze1/crypto-robot-validator/internal/validator"
 	"github.com/google/uuid"
-	"time"
 )
 
 type ctx struct {
@@ -27,7 +24,7 @@ func main() {
 	ctx := createContext()
 	event := createSQSEvent()
 
-	err := operation_hub.Main().Handle(ctx, event)
+	err := validator.Main().Handle(ctx, event)
 	if err != nil {
 		panic(err)
 	}
@@ -40,14 +37,14 @@ func createContext() *ctx {
 }
 
 func createSQSEvent() events.SQSEvent {
-	analysisDto := dto.AnalysisDto{
-		Summary:   summary.StrongBuy,
-		Timestamp: time.Now().Format("2022-01-01 13:01:01"),
-	}
+	operationMessage := `{
+	  "client_id": "aa324edf-99fa-4a95-b9c4-a588d1ccb441e",
+	  "operation": "BUY",
+	  "symbol": "BTC",
+	  "start_time": "2022-09-17T12:05:07.45066-03:00"
+	}`
 
-	analysisMessage, _ := json.Marshal(analysisDto)
-
-	snsEventMessage, _ := json.Marshal(createSNSEvent(string(analysisMessage)))
+	snsEventMessage, _ := json.Marshal(createSNSEvent(operationMessage))
 
 	return events.SQSEvent{
 		Records: []events.SQSMessage{

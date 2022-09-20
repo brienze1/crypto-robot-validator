@@ -181,7 +181,7 @@ func TestBinanceWebServiceBinanceAPIResponseDecodeError(t *testing.T) {
 
 	price, err := binanceWebService.GetCryptoCurrentQuote(symbol.Bitcoin)
 	assert.Equal(t, "Error while trying to decode Binance ticker API response", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "json: cannot unmarshal number into Go struct field Ticker.symbol of type string", err.(custom_error.BaseErrorAdapter).Error())
+	assert.Equal(t, "json: cannot unmarshal number into Go struct field CoinResponse.symbol of type string", err.(custom_error.BaseErrorAdapter).Error())
 	assert.Equal(t, "Error while performing Binance API request", err.(custom_error.BaseErrorAdapter).Description())
 	assert.Equal(t, 0.0, price)
 	assert.Equal(t, 1, binanceAPICounter)
