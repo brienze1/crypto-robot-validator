@@ -37,194 +37,27 @@
 
 ## About the Project
 
-The objective of this project is to receive a BUY or SELL event and trigger operations for active users.
+The objective of this project is to receive an operation event for a single client, validate it and approve operation
+execution.
 
 ### Input
 
 The input should be received as an SNS message sent through an SQS subscription. This message will trigger the lambda
-handler to perform the service. The indicators received should be used to predict marked behaviour and trigger BUY or
-SELL operations.
+handler to perform the service. Operation events should have information needed to track client who will execute the
+operation, the operation type, crypto being traded, operation event time sent and available amount (if operation type is
+BUY amount should be in cash, otherwise if operation type is SELL, amount should be used like cryptocurrency amount).
 
-Data could also be analysed for specific interval indicators if needed in the future (but the current behaviour does not
-use that data).
-
-Analysis summary indicators:
-
-- STRONG_BUY
-- BUY
-- NEUTRAL
-- SELL
-- STRONG_SELL
+Also, this step should validate user stop losses configuration and may lock the client until top loss is available
+again.
 
 Example of how the data received should look like:
 
 ```json
 {
-  "summary": "BUY",
-  "timestamp": "20-07-2022 02:18:10",
-  "analysed_data": [
-    {
-      "interval": "0NE_MINUTE",
-      "timestamp": "20-07-2022 02:18:10",
-      "summary": "BUY",
-      "analysis": [
-        {
-          "metric": "SIMPLE_MOVING_AVERAGE",
-          "indicator": "BUY",
-          "score": {
-            "buy": 4,
-            "sell": 2
-          }
-        },
-        {
-          "indicator": "EXPONENTIAL_MOVING_AVERAGE",
-          "summary": "NEUTRAL",
-          "score": {
-            "buy": 3,
-            "sell": 3
-          }
-        }
-      ]
-    },
-    {
-      "interval": "FIVE_MINUTES",
-      "timestamp": "20-07-2022 02:18:10",
-      "summary": "STRONG_BUY",
-      "analysis": [
-        {
-          "indicator": "SIMPLE_MOVING_AVERAGE",
-          "summary": "BUY",
-          "score": {
-            "buy": 4,
-            "sell": 2
-          }
-        },
-        {
-          "indicator": "EXPONENTIAL_MOVING_AVERAGE",
-          "summary": "NEUTRAL",
-          "score": {
-            "buy": 3,
-            "sell": 3
-          }
-        }
-      ]
-    },
-    {
-      "interval": "FIFTEEN_MINUTES",
-      "timestamp": "20-07-2022 02:18:10",
-      "summary": "STRONG_BUY",
-      "analysis": [
-        {
-          "indicator": "SIMPLE_MOVING_AVERAGE",
-          "summary": "BUY",
-          "score": {
-            "buy": 4,
-            "sell": 2
-          }
-        },
-        {
-          "indicator": "EXPONENTIAL_MOVING_AVERAGE",
-          "summary": "NEUTRAL",
-          "score": {
-            "buy": 3,
-            "sell": 3
-          }
-        }
-      ]
-    },
-    {
-      "interval": "THIRTY_MINUTES",
-      "timestamp": "20-07-2022 02:18:10",
-      "summary": "STRONG_BUY",
-      "analysis": [
-        {
-          "indicator": "SIMPLE_MOVING_AVERAGE",
-          "summary": "BUY",
-          "score": {
-            "buy": 4,
-            "sell": 2
-          }
-        },
-        {
-          "indicator": "EXPONENTIAL_MOVING_AVERAGE",
-          "summary": "NEUTRAL",
-          "score": {
-            "buy": 3,
-            "sell": 3
-          }
-        }
-      ]
-    },
-    {
-      "interval": "ONE_HOUR",
-      "timestamp": "20-07-2022 02:18:10",
-      "summary": "STRONG_BUY",
-      "analysis": [
-        {
-          "indicator": "SIMPLE_MOVING_AVERAGE",
-          "summary": "BUY",
-          "score": {
-            "buy": 4,
-            "sell": 2
-          }
-        },
-        {
-          "indicator": "EXPONENTIAL_MOVING_AVERAGE",
-          "summary": "NEUTRAL",
-          "score": {
-            "buy": 3,
-            "sell": 3
-          }
-        }
-      ]
-    },
-    {
-      "interval": "SIX_HOURS",
-      "timestamp": "20-07-2022 02:18:10",
-      "summary": "STRONG_BUY",
-      "analysis": [
-        {
-          "indicator": "SIMPLE_MOVING_AVERAGE",
-          "summary": "BUY",
-          "score": {
-            "buy": 4,
-            "sell": 2
-          }
-        },
-        {
-          "indicator": "EXPONENTIAL_MOVING_AVERAGE",
-          "summary": "NEUTRAL",
-          "score": {
-            "buy": 3,
-            "sell": 3
-          }
-        }
-      ]
-    },
-    {
-      "interval": "ONE_DAY",
-      "timestamp": "20-07-2022 02:18:10",
-      "summary": "STRONG_BUY",
-      "analysis": [
-        {
-          "indicator": "SIMPLE_MOVING_AVERAGE",
-          "summary": "BUY",
-          "score": {
-            "buy": 4,
-            "sell": 2
-          }
-        },
-        {
-          "indicator": "EXPONENTIAL_MOVING_AVERAGE",
-          "summary": "NEUTRAL",
-          "score": {
-            "buy": 3,
-            "sell": 3
-          }
-        }
-      ]
-    }
-  ]
+  "client_id": "aa324edf-99fa-4a95-b9c4-a588d1ccb441e",
+  "operation": "BUY",
+  "symbol": "BTC",
+  "start_time": "2022-09-17T12:05:07.45066-03:00"
 }
 ```
 
@@ -232,18 +65,13 @@ Example of how the data received should look like:
 
 Since this is an async application there is no output to be returned, but operation events are generated from the data
 received.
-Operation events should have information needed to track client who will trigger the operation, the operation type,
-crypto being traded, operation event time sent and available amount (if operation type is BUY amount should be in cash,
-otherwise if operation type is SELL, amount should be used like cryptocurrency amount).
+Operation events should have information needed to get the operation from its db, the operation id.
 
 Example of how the line should look like:
 
-```
+```json
 {
-    "client_id": "asdasd-asdasd-asdasd-asdasd",
-    "operation": "BUY",
-    "symbol": "BTC",
-    "start_time": "2007-12-03 10:15:30",
+  "operation_id": "aa324edf-99fa-4a95-b9c4-a588d1ccb441e"
 }
 ```
 
@@ -252,7 +80,6 @@ Example of how the line should look like:
 #### Client DB
 
 Client DB is the database that contains the client information and configuration needed to trigger the operations.
-For this DB, DynamoDB was chosen because it's cheaper.
 
 ##### Schema
 
@@ -326,7 +153,7 @@ For this DB, DynamoDB was chosen because it's cheaper.
 This application supports the following operations to the Client DB:
 
 - Read ops:
-    - Used to read clients available for the current operation
+    - Used to find clients using client_id
 
 ##### Query
 
@@ -335,14 +162,7 @@ This is the query used to get clients from DB:
 ```gotemplate
     expr, _ := expression.NewBuilder().WithFilter(
     expression.And(
-    expression.Name("active").Equal(expression.Value(config.Active)),
-    expression.Name("locked").Equal(expression.Value(config.Locked)),
-    expression.Name("locked_until").LessThanEqual(expression.Value(d.timeSource.Now())),
-    expression.Name("cash_amount").GreaterThanEqual(expression.Value(config.MinimumCash)),
-    expression.Name("crypto_amount").GreaterThanEqual(expression.Value(config.MinimumCrypto)),
-    expression.Name("sell_on").LessThanEqual(expression.Value(config.SellWeight.Value())),
-    expression.Name("buy_on").LessThanEqual(expression.Value(config.BuyWeight.Value())),
-    expression.Name("symbols").Contains(config.Symbol.Name()),
+    expression.Name("client_id").Equal(expression.Value(client_id))),
     ),
     ).Build()
 ```
@@ -351,7 +171,7 @@ This is the query used to get clients from DB:
 
 Here are some rules that need to be implemented in this application.
 
-Implemented:
+Not Implemented:
 
 - Client must be active
 - Client must not be locked
@@ -367,9 +187,6 @@ Implemented:
   value.
     - For example if the config value is equal to `SELL` and a `STRONG_SELL` analysis was received, the operation should
       be allowed, and the opposite should be denied.
-
-Not implemented (this will be done on another service):
-
 - Operations should not be triggered if `daily_summary.proffit` has a negative value of more than or equal to
   the `config.day_stop_loss` value.
     - `daily_summary.day` value should be checked to see if current day has changed, in this case, the values
@@ -378,6 +195,9 @@ Not implemented (this will be done on another service):
   the `config.month_stop_loss` value.
     - `monthly_summary.month` value should be checked to see if current month has changed, in this case, the values
       should be updated to start a new month.
+
+OBS: this application has the ability to lock the client for a predetermined amount of time. (stop loss block for
+example)
 
 ### Built With
 
@@ -403,14 +223,12 @@ using GitHub actions. Local environment is created using localstack for testing 
 
 ### Roadmap
 
-- [x] Implement Behaviour tests (BDD)
-- [x] Implement Unit tests
-- [x] Implement application logic
+- [ ] Implement Behaviour tests (BDD)
+- [ ] Implement Unit tests
+- [ ] Implement application logic
 - [x] Create Dockerfile
-- [x] Create Docker compose for local infrastructure
-- [x] Document everything in Readme
-- [X] Change to use DynamoDB instead of Postgres (worse performance but, less expensive)
-- [x] Use secret manager to get DB password
+- [ ] Create Docker compose for local infrastructure
+- [ ] Document everything in Readme
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -518,7 +336,7 @@ Obs: Make sure Docker is running before.
       ```bash
       go test ./test/integrated/...
       ```
-      
+
 - To run the all tests:
     - Windows/macOS/Linux/WSL
       ```bash
@@ -541,12 +359,14 @@ EPAM.
 I graduated from UNESP studying Automation and Control Engineering in 2022, and I also took multiple courses on Udemy
 and Alura.
 
-My main stack is Java, but I'm also pretty good working with Kotlin and Typescript (both server side).
-I have quite a good knowledge of AWS Cloud, and I'm also very conformable working with Docker.
+My main stack is Java, but I'm also pretty good working with Kotlin and Typescript (both server side). I have quite a
+good knowledge of AWS Cloud, and I'm also very conformable working with Docker.
+
+Also, I have experience working with relational (PostgreSQL, Microsoft SQL Server, MySQL, ...) and non-relational (
+DynamoDB, Redis, Cassandra, ...) databases.
 
 During my career, while working with QA's, I've also gained a lot of valuable experience with testing applications in
-general from unit/integrated
-testing using TDD and BDD, to performance testing apps with JMeter for example.
+general from unit/integrated testing using TDD and BDD, to performance testing apps with JMeter for example.
 
 If you want to talk to me, please fell free to reach me anytime at [LinkedIn](https://www.linkedin.com/in/luisbrienze/)
 or [e-mail](mailto:lfbrienze@gmail.com?subject=[GitHUB]%20Crypto%20robot%20validator).
