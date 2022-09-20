@@ -1,0 +1,34 @@
+version: "3"
+
+services:
+  localstack:
+    image: localstack/localstack
+    ports:
+      - '4566-4597:4566-4597'
+    environment:
+      - EDGE_PORT=4566
+      - SERVICES=sns,sqs,dynamodb,secretsmanager,cloudwatch
+      - DEBUG=1
+    volumes:
+      - ./scripts/localstack:/docker-entrypoint-initaws.d
+      - /var/run/docker.sock:/var/run/docker.sock
+  crypto-robot-operation-hub:
+      container_name: operation-hub-lambda
+      build:
+        context: ../../../crypto-robot-operation-hub
+        dockerfile: Dockerfile
+      volumes:
+        - ./lambda-files:/lambda-files
+      entrypoint: sh -c "cp crypto-robot-operation-hub.zip /lambda-files"
+  awscli:
+    depends_on:
+      - crypto-robot-operation-hub
+    image: amazon/aws-cli:latest
+    volumes:
+      - ./lambda-files:/lambda-files
+      - ./scripts/localstack:/init-scripts/localstack
+      - ./scripts/lambda:/init-scripts/lambda
+    entrypoint: >
+      sh -c "sh /init-scripts/localstack/01-profile-creation.sh && 
+      sh /init-scripts/lambda/01-wait-for-localstack.sh && 
+      sh /init-scripts/lambda/02-resources-creation.sh"

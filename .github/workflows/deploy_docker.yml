@@ -1,0 +1,34 @@
+name: Docker Deploy
+
+on:
+  workflow_call:
+    secrets:
+      username:
+        required: true
+      app_name:
+        required: true
+      token:
+        required: true
+
+jobs:
+  deploy-docker:
+    name: Deploy Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.username }}
+          password: ${{ secrets.token }}
+
+      - name: Build and Push to Docker Hub
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.username }}/${{ secrets.app_name }}:latest
+            ${{ secrets.username }}/${{ secrets.app_name }}:${{ github.run_number }}
