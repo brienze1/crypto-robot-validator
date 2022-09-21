@@ -2,15 +2,16 @@ name: Test
 
 on:
   workflow_call:
+    inputs:
+      branch:
+        description: 'The branch that the workflow should run with'
+        default: 'main'
+        required: false
+        type: string
 
 jobs:
   test:
     name: Test
-#    strategy:
-#      matrix:
-#        go-version: [ 1.19 ]
-#        platform: [ windows-latest, macos-latest, ubuntu-latest ]
-#    runs-on: ${{ matrix.platform }}
     runs-on: ubuntu-latest
     steps:
       - name: Setup cache
@@ -25,6 +26,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Setup Go
         uses: actions/setup-go@v3
