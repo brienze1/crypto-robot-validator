@@ -7,14 +7,14 @@ import (
 	"time"
 )
 
-type OperationRequestDto struct {
+type OperationRequest struct {
 	ClientId      string                       `json:"client_id"`
 	OperationTypo operation_type.OperationType `json:"operation"`
 	Symbol        symbol.Symbol                `json:"symbol"`
 	StartTime     time.Time                    `json:"start_time"`
 }
 
-func (o *OperationRequestDto) ToModel() *model.OperationRequest {
+func (o *OperationRequest) ToModel() *model.OperationRequest {
 	return &model.OperationRequest{
 		ClientId:  o.ClientId,
 		Operation: o.OperationTypo,

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/application/config"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/application/config"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestLoadEnvSuccess(t *testing.T) {
-	err := os.Setenv("OPERATION_HUB_ENV", "test")
+	err := os.Setenv("VALIDATOR_ENV", "test")
 	assert.Nil(t, err)
 
 	panicFunction := func() { config.LoadEnv() }
@@ -18,7 +18,7 @@ func TestLoadEnvSuccess(t *testing.T) {
 }
 
 func TestLoadEnvFailure(t *testing.T) {
-	err := os.Setenv("OPERATION_HUB_ENV", uuid.NewString())
+	err := os.Setenv("VALIDATOR_ENV", uuid.NewString())
 	assert.Nil(t, err)
 
 	panicFunction := func() { config.LoadEnv() }

@@ -1,8 +1,8 @@
 package properties
 
 import (
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/application/config"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/application/properties"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/application/config"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/application/properties"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"os"

@@ -2,7 +2,7 @@ package custom_error
 
 import (
 	"errors"
-	"github.com/brienze1/crypto-robot-operation-hub/pkg/custom_error"
+	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

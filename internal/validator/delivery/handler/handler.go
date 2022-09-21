@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/brienze1/crypto-robot-operation-hub/pkg/custom_error"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/delivery/dto"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/delivery/exceptions"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
+	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
 )
 
 type handler struct {
@@ -34,7 +34,7 @@ func (h *handler) Handle(context context.Context, event events.SQSEvent) error {
 		return h.abort(err, "Error while trying to parse the SNS message")
 	}
 
-	operationRequestDto := &dto.OperationRequestDto{}
+	operationRequestDto := &dto.OperationRequest{}
 	if err := json.Unmarshal([]byte(snsMessage.Message), operationRequestDto); err != nil {
 		return h.abort(err, "Error while trying to parse the operation request object")
 	}

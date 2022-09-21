@@ -211,12 +211,14 @@ Operation statuses:
   "locked": false,
   "quote": "BTC",
   "base": "BRL",
+  "type": "BUY",
+  "amount": 100.00,
   "stop_loss": 50.00,
   "profit": 1.0,
   "transactions": [
     {
       "type": "BUY",
-      "quote_unitary_value": 100000.00,
+      "unitary_value": 100000.00,
       "quote_amount": 0.001,
       "base_amount": 100.00,
       "created_at": "2022-09-17T12:05:07.45066-03:00",
@@ -225,7 +227,7 @@ Operation statuses:
     },
     {
       "type": "SELL",
-      "quote_unitary_value": 101000.00,
+      "unitary_value": 101000.00,
       "quote_amount": 0.001,
       "base_amount": 101.00,
       "created_at": "2022-09-17T12:05:07.45066-03:00",
@@ -350,10 +352,12 @@ Lock:
   loss block for example)
 
 Operations:
+
 - Operation should be created with status `CREATED` and it's id should be sent to the SNS topic for later execution.
 - Operation amount should be created using client configuration and Biscoint current unitary value.
 
 Biscoint:
+
 - Client balance should be validated from Biscoint and updated in DynamoDB clients DB.
 
 ### Built With

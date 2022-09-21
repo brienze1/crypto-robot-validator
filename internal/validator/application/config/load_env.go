@@ -1,7 +1,7 @@
 package config
 
 import (
-	logg "github.com/brienze1/crypto-robot-operation-hub/pkg/log"
+	"github.com/brienze1/crypto-robot-validator/pkg/log"
 	"github.com/joho/godotenv"
 	"os"
 	"regexp"
@@ -35,7 +35,7 @@ func load(file string) {
 		rootPath := getRootPath(alternateParentFolderName)
 		err := godotenv.Load(rootPath + configDirPath + file)
 		if err != nil {
-			logg.Logger().Error(err, "failed loading env file "+file)
+			log.Logger().Error(err, "failed loading env file "+file)
 			panic("Error loading file: " + file)
 		}
 	}

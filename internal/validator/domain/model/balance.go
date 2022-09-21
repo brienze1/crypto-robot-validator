@@ -1,6 +1,6 @@
 package model
 
 type Balance struct {
-	brlBalance    float64
-	cryptoBalance float64
+	BrlBalance    float64
+	CryptoBalance float64
 }

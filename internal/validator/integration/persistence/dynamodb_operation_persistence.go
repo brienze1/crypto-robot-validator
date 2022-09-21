@@ -43,7 +43,7 @@ func (d *dynamoDBOperationPersistence) Save(operation *model.Operation) custom_e
 }
 
 func (d *dynamoDBOperationPersistence) abort(err error, message string) custom_error.BaseErrorAdapter {
-	dynamoDBClientPersistenceError := exceptions.DynamoDBClientPersistenceError(err, message)
-	d.logger.Error(dynamoDBClientPersistenceError, "Get clients failed: "+message)
-	return dynamoDBClientPersistenceError
+	dynamoDBOperationPersistenceError := exceptions.DynamoDBOperationPersistenceError(err, message)
+	d.logger.Error(dynamoDBOperationPersistenceError, "Save operation failed: "+message)
+	return dynamoDBOperationPersistenceError
 }

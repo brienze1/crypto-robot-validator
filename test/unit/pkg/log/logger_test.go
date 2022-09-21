@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/domain/adapters"
-	"github.com/brienze1/crypto-robot-operation-hub/pkg/custom_error"
-	logg "github.com/brienze1/crypto-robot-operation-hub/pkg/log"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
+	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
+	log2 "github.com/brienze1/crypto-robot-validator/pkg/log"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"log"
@@ -25,7 +25,7 @@ var (
 )
 
 func setup() {
-	logger = logg.Logger()
+	logger = log2.Logger()
 
 	log.SetOutput(&buf)
 
