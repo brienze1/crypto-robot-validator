@@ -16,26 +16,25 @@ import (
 	"github.com/google/uuid"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"time"
 )
 
-func TestFeatures(t *testing.T) {
-	suite := godog.TestSuite{
-		ScenarioInitializer: func(s *godog.ScenarioContext) {
-			InitializeScenario(s)
-		},
-		Options: &godog.Options{
-			Format:   "pretty",
-			Paths:    []string{"features"},
-			TestingT: t,
-		},
-	}
-
-	if suite.Run() != 0 {
-		t.Fatal("non-zero status returned, failed to run feature tests")
-	}
-}
+//func TestFeatures(t *testing.T) {
+//	suite := godog.TestSuite{
+//		ScenarioInitializer: func(s *godog.ScenarioContext) {
+//			InitializeScenario(s)
+//		},
+//		Options: &godog.Options{
+//			Format:   "pretty",
+//			Paths:    []string{"features"},
+//			TestingT: t,
+//		},
+//	}
+//
+//	if suite.Run() != 0 {
+//		t.Fatal("non-zero status returned, failed to run feature tests")
+//	}
+//}
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^test env variables were loaded$`, testEnvVariablesWereLoaded)
