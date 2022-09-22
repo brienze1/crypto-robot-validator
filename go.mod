@@ -8,7 +8,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.17.6
 	github.com/aws/aws-sdk-go-v2/credentials v1.12.19
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.9.18
-	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.24
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.17.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.16.0
 	github.com/aws/aws-sdk-go-v2/service/sns v1.18.0
@@ -42,4 +41,11 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+replace (
+	github.com/gogo/protobuf v1.2.1 => github.com/gogo/protobuf v1.3.2
+	github.com/miekg/dns v1.0.14 => github.com/miekg/dns v1.1.50
+	github.com/prometheus/client_golang v0.9.3 => github.com/prometheus/client_golang v1.13.0
+	golang.org/x/text v0.3.2 => golang.org/x/text v0.3.7
 )
