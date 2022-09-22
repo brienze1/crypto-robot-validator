@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/application/properties"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/dto"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/exceptions"
 )
@@ -35,15 +36,22 @@ func (d *dynamoDBClient) Scan(_ context.Context, _ *dynamodb.ScanInput, _ ...fun
 func (d *dynamoDBClient) GetItem(_ context.Context, params *dynamodb.GetItemInput, _ ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error) {
 	d.GetItemCounter++
 
-	if d.GetItemError != nil {
+	if d.GetItemError != nil && params.TableName == properties.Properties().Aws.DynamoDB.ClientTableName {
 		return nil, exceptions.DynamoDBClientPersistenceError(d.GetItemError, "GetItem error")
+	} else if d.GetItemError != nil && params.TableName == properties.Properties().Aws.DynamoDB.OperationTableName {
+		return nil, exceptions.DynamoDBOperationPersistenceError(d.GetItemError, "GetItem error")
 	}
 
-	client := map[string]string{}
+	request := map[string]string{}
 
-	_ = attributevalue.UnmarshalMap(params.Key, &client)
+	_ = attributevalue.UnmarshalMap(params.Key, &request)
 
-	item := d.items[client["client_id"]]
+	var item interface{}
+	if params.TableName == properties.Properties().Aws.DynamoDB.ClientTableName {
+		item = d.items[request["client_id"]]
+	} else if params.TableName == properties.Properties().Aws.DynamoDB.OperationTableName {
+		item = d.items[request["operation_id"]]
+	}
 
 	var itemOutput map[string]types.AttributeValue
 
@@ -61,15 +69,27 @@ func (d *dynamoDBClient) GetItem(_ context.Context, params *dynamodb.GetItemInpu
 func (d *dynamoDBClient) PutItem(_ context.Context, params *dynamodb.PutItemInput, _ ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error) {
 	d.PutItemCounter++
 
-	if d.PutItemError != nil {
+	if d.PutItemError != nil && params.TableName == properties.Properties().Aws.DynamoDB.ClientTableName {
 		return nil, exceptions.DynamoDBClientPersistenceError(d.PutItemError, "PutItem error")
+	} else if d.PutItemError != nil && params.TableName == properties.Properties().Aws.DynamoDB.OperationTableName {
+		return nil, exceptions.DynamoDBOperationPersistenceError(d.PutItemError, "PutItem error")
 	}
 
-	client := &dto.Client{}
+	var item interface{}
+	var key string
+	if params.TableName == properties.Properties().Aws.DynamoDB.ClientTableName {
+		client := &dto.Client{}
+		_ = attributevalue.UnmarshalMap(params.Item, &client)
+		item = client
+		key = client.Id
+	} else if params.TableName == properties.Properties().Aws.DynamoDB.OperationTableName {
+		operation := &dto.Operation{}
+		_ = attributevalue.UnmarshalMap(params.Item, &operation)
+		item = operation
+		key = operation.Id
+	}
 
-	_ = attributevalue.UnmarshalMap(params.Item, &client)
-
-	d.AddItem(client.Id, client)
+	d.AddItem(key, item)
 
 	return nil, nil
 }

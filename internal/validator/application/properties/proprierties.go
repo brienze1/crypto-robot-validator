@@ -30,7 +30,8 @@ type awsConfig struct {
 }
 
 type dynamoDB struct {
-	ClientTableName *string
+	ClientTableName    *string
+	OperationTableName *string
 }
 
 var once sync.Once
@@ -54,7 +55,7 @@ func loadProperties() *properties {
 	profile := os.Getenv("PROFILE")
 	minimumCryptoSellOperation := getDoubleEnvVariable("MINIMUM_CRYPTO_SELL_OPERATION")
 	minimumCryptoBuyOperation := getDoubleEnvVariable("MINIMUM_CRYPTO_BUY_OPERATION")
-	biscointGetCryptoUrl := os.Getenv("BINANCE_CRYPTO_SYMBOL_PRICE_TICKER_URL")
+	biscointGetCryptoUrl := os.Getenv("BISCOINT_CRYPTO_URL")
 	cryptoOperationTriggerTopicArn := os.Getenv("AWS_SNS_TOPIC_ARN_CRYPTO_OPERATIONS")
 	awsRegion := os.Getenv("AWS_REGION")
 	awsURL := os.Getenv("AWS_URL")
@@ -63,6 +64,7 @@ func loadProperties() *properties {
 	awsAccessToken := os.Getenv("AWS_ACCESS_TOKEN")
 	awsOverrideConfig := getBoolEnvVariable("AWS_OVERRIDE_CONFIG")
 	clientTableName := os.Getenv("AWS_DYNAMODB_CLIENT_TABLE_NAME")
+	operationTableName := os.Getenv("AWS_DYNAMODB_OPERATION_TABLE_NAME")
 
 	return &properties{
 		Profile:                        profile,
@@ -80,7 +82,8 @@ func loadProperties() *properties {
 				OverrideConfig: awsOverrideConfig,
 			},
 			DynamoDB: &dynamoDB{
-				ClientTableName: &clientTableName,
+				ClientTableName:    &clientTableName,
+				OperationTableName: &operationTableName,
 			},
 		},
 	}
