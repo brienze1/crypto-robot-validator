@@ -7,7 +7,6 @@ import (
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/model"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/dto"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/persistence"
-	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
 	"github.com/brienze1/crypto-robot-validator/test/mocks"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -59,9 +58,9 @@ func TestGetClientsClientNotFoundFailure(t *testing.T) {
 
 	client, err := clientPersistence.GetClient(uuid.NewString())
 
-	assert.Equal(t, "Client not found.", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "Client not found.", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while using DynamoDB Client table", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "Client not found.", err.Error())
+	assert.Equal(t, "Client not found.", err.InternalError())
+	assert.Equal(t, "Error while using DynamoDB Client table", err.Description())
 	assert.Nilf(t, client, "Should be nil")
 	assert.Equal(t, 1, dynamoDBClient.GetItemCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
@@ -75,9 +74,9 @@ func TestGetClientsDynamoDBClientFailure(t *testing.T) {
 
 	client, err := clientPersistence.GetClient(uuid.NewString())
 
-	assert.Equal(t, "dynamodb client error", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "GetItem error", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while using DynamoDB Client table", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "dynamodb client error", err.Error())
+	assert.Equal(t, "GetItem error", err.InternalError())
+	assert.Equal(t, "Error while using DynamoDB Client table", err.Description())
 	assert.Nilf(t, client, "Should be nil")
 	assert.Equal(t, 1, dynamoDBClient.GetItemCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
@@ -96,9 +95,9 @@ func TestGetClientsUnmarshalFailure(t *testing.T) {
 
 	client, err := clientPersistence.GetClient(clientId)
 
-	assert.Equal(t, "unmarshal failed, cannot unmarshal string into Go value type bool", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "Error while trying to unmarshal get client response.", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while using DynamoDB Client table", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "unmarshal failed, cannot unmarshal string into Go value type bool", err.Error())
+	assert.Equal(t, "Error while trying to unmarshal get client response.", err.InternalError())
+	assert.Equal(t, "Error while using DynamoDB Client table", err.Description())
 	assert.Nilf(t, client, "Should be nil")
 	assert.Equal(t, 1, dynamoDBClient.GetItemCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
@@ -112,9 +111,9 @@ func TestGetClientsClientLockedFailure(t *testing.T) {
 
 	client, err := clientPersistence.GetClient(clientLocked.Id)
 
-	assert.Equal(t, "Client is locked.", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "Client is locked.", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while using DynamoDB Client table", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "Client is locked.", err.Error())
+	assert.Equal(t, "Client is locked.", err.InternalError())
+	assert.Equal(t, "Error while using DynamoDB Client table", err.Description())
 	assert.Nilf(t, client, "Should be nil")
 	assert.Equal(t, 1, dynamoDBClient.GetItemCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
@@ -136,9 +135,9 @@ func TestLockSuccess(t *testing.T) {
 
 	_, err = clientPersistence.GetClient(clientUnlocked.Id)
 
-	assert.Equal(t, "Client is locked.", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "Client is locked.", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while using DynamoDB Client table", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "Client is locked.", err.Error())
+	assert.Equal(t, "Client is locked.", err.InternalError())
+	assert.Equal(t, "Error while using DynamoDB Client table", err.Description())
 }
 
 func TestLockPutItemFailure(t *testing.T) {
@@ -148,9 +147,9 @@ func TestLockPutItemFailure(t *testing.T) {
 
 	err := clientPersistence.Lock(clientUnlocked)
 
-	assert.Equal(t, "lock error", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "PutItem error", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while using DynamoDB Client table", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "lock error", err.Error())
+	assert.Equal(t, "PutItem error", err.InternalError())
+	assert.Equal(t, "Error while using DynamoDB Client table", err.Description())
 	assert.Equal(t, true, clientUnlocked.Locked)
 	assert.Equal(t, 1, dynamoDBClient.PutItemCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
@@ -187,9 +186,9 @@ func TestUnlockPutItemFailure(t *testing.T) {
 
 	err := clientPersistence.Unlock(clientLocked)
 
-	assert.Equal(t, "unlock error", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "PutItem error", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while using DynamoDB Client table", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "unlock error", err.Error())
+	assert.Equal(t, "PutItem error", err.InternalError())
+	assert.Equal(t, "Error while using DynamoDB Client table", err.Description())
 	assert.Equal(t, false, clientLocked.Locked)
 	assert.Equal(t, 1, dynamoDBClient.PutItemCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
@@ -211,12 +210,13 @@ func TestLockAndUnlockSuccess(t *testing.T) {
 
 	_, err = clientPersistence.GetClient(clientUnlocked.Id)
 
-	assert.Equal(t, "Client is locked.", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "Client is locked.", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while using DynamoDB Client table", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "Client is locked.", err.Error())
+	assert.Equal(t, "Client is locked.", err.InternalError())
+	assert.Equal(t, "Error while using DynamoDB Client table", err.Description())
 
 	err = clientPersistence.Unlock(clientUnlocked)
 
+	assert.Nilf(t, err, "Should be nil")
 	assert.Equal(t, false, clientUnlocked.Locked)
 	assert.Equal(t, 2, dynamoDBClient.PutItemCounter)
 	assert.Equal(t, 5, logger.InfoCallCounter)

@@ -23,12 +23,12 @@ func (d *dynamoDBOperationPersistence) Save(operation *model.Operation) custom_e
 		return exceptions.DynamoDBOperationPersistenceError(d.SaveError, "save error")
 	}
 
-	for _, operationSaved := range d.operationsAvailable {
-		if operation.Id == operationSaved.Id {
-			operationSaved = operation
-			return nil
-		}
-	}
+	//for _, operationSaved := range d.operationsAvailable {
+	//	if operation.Id == operationSaved.Id {
+	//		operationSaved = operation
+	//		return nil
+	//	}
+	//}
 
 	d.operationsAvailable = append(d.operationsAvailable, operation)
 

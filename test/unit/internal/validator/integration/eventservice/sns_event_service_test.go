@@ -10,7 +10,6 @@ import (
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
 	adapters2 "github.com/brienze1/crypto-robot-validator/internal/validator/integration/adapters"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/eventservice"
-	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -103,9 +102,9 @@ func TestSendPublishFailure(t *testing.T) {
 
 	err := snsEventService.Send(payload)
 
-	assert.Equal(t, "test error", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "Error while trying to publish", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while publishing SNS event", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "test error", err.Error())
+	assert.Equal(t, "Error while trying to publish", err.InternalError())
+	assert.Equal(t, "Error while publishing SNS event", err.Description())
 	assert.Equal(t, 1, snsPublishCounter)
 	assert.Equal(t, payloadString, *snsPublishInput.Message)
 	assert.Equal(t, properties.Properties().CryptoOperationTriggerTopicArn, *snsPublishInput.TopicArn)
@@ -120,9 +119,9 @@ func TestSendMarshalFailure(t *testing.T) {
 
 	err := snsEventService.Send(payload)
 
-	assert.Equal(t, "json: unsupported type: chan int", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "Error while trying create string message", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while publishing SNS event", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "json: unsupported type: chan int", err.Error())
+	assert.Equal(t, "Error while trying create string message", err.InternalError())
+	assert.Equal(t, "Error while publishing SNS event", err.Description())
 	assert.Equal(t, 0, snsPublishCounter)
 	assert.Equal(t, 1, loggerInfoCounter)
 	assert.Equal(t, 1, loggerErrorCounter)

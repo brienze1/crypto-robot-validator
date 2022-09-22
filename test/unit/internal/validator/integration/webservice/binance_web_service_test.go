@@ -6,7 +6,6 @@ import (
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/enum/symbol"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/webservice"
-	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
 	"github.com/brienze1/crypto-robot-validator/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -72,9 +71,9 @@ func TestGetCryptoNewRequestFailure(t *testing.T) {
 	properties.Properties().BiscointGetCryptoUrl = string([]byte{0x7f})
 
 	coin, err := biscointWebService.GetCrypto(symbol.Bitcoin, symbol.Brl)
-	assert.Equal(t, "parse \"\\x7f\": net/url: invalid control character in URL", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "Error while trying to generate Biscoint get request", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while performing Biscoint API request", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "parse \"\\x7f\": net/url: invalid control character in URL", err.Error())
+	assert.Equal(t, "Error while trying to generate Biscoint get request", err.InternalError())
+	assert.Equal(t, "Error while performing Biscoint API request", err.Description())
 	assert.Nil(t, coin)
 }
 
@@ -85,9 +84,9 @@ func TestGetCryptoDoRequestFailure(t *testing.T) {
 	properties.Properties().BiscointGetCryptoUrl = ""
 
 	coin, err := biscointWebService.GetCrypto(symbol.Bitcoin, symbol.Brl)
-	assert.Equal(t, "Get \"?quote=BRL&symbol=BTC\": unsupported protocol scheme \"\"", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "Error while trying to get crypto value from Biscoint", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while performing Biscoint API request", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "Get \"?quote=BRL&symbol=BTC\": unsupported protocol scheme \"\"", err.Error())
+	assert.Equal(t, "Error while trying to get crypto value from Biscoint", err.InternalError())
+	assert.Equal(t, "Error while performing Biscoint API request", err.Description())
 	assert.Nil(t, coin)
 }
 
@@ -98,9 +97,9 @@ func TestGetCryptoStatusNotOKFailure(t *testing.T) {
 	client.StatusCode = 400
 
 	coin, err := biscointWebService.GetCrypto(symbol.Bitcoin, symbol.Brl)
-	assert.Equal(t, "Biscoint API status code not Ok: 400 Bad Request", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "Biscoint API status code not Ok: 400 Bad Request", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while performing Biscoint API request", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "Biscoint API status code not Ok: 400 Bad Request", err.Error())
+	assert.Equal(t, "Biscoint API status code not Ok: 400 Bad Request", err.InternalError())
+	assert.Equal(t, "Error while performing Biscoint API request", err.Description())
 	assert.Nil(t, coin)
 }
 
@@ -129,8 +128,8 @@ func TestGetCryptoDecodeFailure(t *testing.T) {
 		}`
 
 	coin, err := biscointWebService.GetCrypto(symbol.Bitcoin, symbol.Brl)
-	assert.Equal(t, "json: cannot unmarshal string into Go struct field Coin.data.ask of type float64", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "Error while trying to decode Biscoint coinResponse API response", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while performing Biscoint API request", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "json: cannot unmarshal string into Go struct field Coin.data.ask of type float64", err.Error())
+	assert.Equal(t, "Error while trying to decode Biscoint coinResponse API response", err.InternalError())
+	assert.Equal(t, "Error while performing Biscoint API request", err.Description())
 	assert.Nil(t, coin)
 }
