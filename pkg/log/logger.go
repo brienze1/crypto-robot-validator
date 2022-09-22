@@ -2,7 +2,7 @@ package log
 
 import (
 	"encoding/json"
-	"github.com/brienze1/crypto-robot-operation-hub/pkg/custom_error"
+	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
 	"github.com/google/uuid"
 	"log"
 	"sync"

@@ -4,22 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/application/config"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/application/properties"
-	dto2 "github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/delivery/dto"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/domain/enum/summary"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/domain/enum/symbol"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/domain/model"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/integration/dto"
-	"github.com/brienze1/crypto-robot-operation-hub/pkg/log"
+	"github.com/brienze1/crypto-robot-validator/internal/validator"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/application/config"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/application/properties"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/model"
+	"github.com/brienze1/crypto-robot-validator/test/mocks"
 	"github.com/cucumber/godog"
 	"github.com/google/uuid"
 	"net/http"
@@ -68,17 +60,13 @@ type (
 	contextMock struct {
 		context.Context
 	}
-	dynamoDB struct {
-	}
 )
 
 var (
-	dynamoDb                = &dynamoDB{}
-	dynamoDBClientError     error
-	persistedClients        []model.Client
+	persistedClients        []*model.Client
 	snsClientError          error
 	snsClientPublishCounter = 0
-	snsClientPublishInputs  []model.OperationRequest
+	snsClientPublishInputs  []*model.OperationRequest
 	handlerError            error
 )
 
@@ -95,7 +83,7 @@ func (s *snsClientMock) Publish(_ context.Context, input *sns.PublishInput, _ ..
 	snsClientPublishCounter++
 	request := model.OperationRequest{}
 	_ = json.Unmarshal([]byte(*input.Message), &request)
-	snsClientPublishInputs = append(snsClientPublishInputs, request)
+	snsClientPublishInputs = append(snsClientPublishInputs, &request)
 	return nil, snsClientError
 }
 
@@ -105,71 +93,38 @@ func (ctx contextMock) Value(any) any {
 	}
 }
 
-func (d *dynamoDB) Scan(_ context.Context, params *dynamodb.ScanInput, _ ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error) {
-	var items []map[string]types.AttributeValue
-
-	for _, persistedClient := range persistedClients {
-		if d.selectClient(persistedClient, params) {
-			client := &dto.Client{
-				Id: persistedClient.Id,
-			}
-			item, _ := attributevalue.MarshalMap(client)
-			items = append(items, item)
-		}
-	}
-
-	return &dynamodb.ScanOutput{Items: items}, dynamoDBClientError
-}
-
-func (d *dynamoDB) selectClient(_ model.Client, _ *dynamodb.ScanInput) bool {
-	return true
-}
-
 var (
-	expectedPrice float64
-	ctx           contextMock
-	event         *events.SQSEvent
-	summaryValue  summary.Summary
+	ctx   contextMock
+	event *events.SQSEvent
 )
 
 func testEnvVariablesWereLoaded() {
 	config.LoadTestEnv()
 }
 
-func dynamoDBIs(status string) error {
-	config.DependencyInjector().DynamoDBClient = dynamoDb
-
-	if status != "up" {
-		dynamoDBClientError = errors.New("dynamoDB not up")
-	}
+func dynamoDBIs(_ string) error {
+	config.DependencyInjector().DynamoDBClient = mocks.DynamoDBClient()
 
 	return nil
 }
 
 func binanceApiIs(status string) error {
-	expectedPrice = 21537.81000000
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if status != "up" {
 			http.Error(w, "error test", 500)
 		}
 
-		response, _ := json.Marshal(dto.Ticker{
-			Symbol: string(symbol.Bitcoin),
-			Price:  fmt.Sprintf("%f", expectedPrice),
-		},
-		)
-
-		_, _ = w.Write(response)
+		//_, _ = w.Write(response)
 	}))
 
-	properties.Properties().BinanceCryptoSymbolPriceTickerUrl = server.URL
+	properties.Properties().BiscointGetCryptoUrl = server.URL
 
 	return nil
 }
 
 func snsServiceIs(status string) error {
 	snsClientPublishCounter = 0
-	snsClientPublishInputs = []model.OperationRequest{}
+	snsClientPublishInputs = []*model.OperationRequest{}
 	config.DependencyInjector().SNSClient = &snsClientMock{}
 
 	if status != "up" {
@@ -179,10 +134,8 @@ func snsServiceIs(status string) error {
 	return nil
 }
 
-func iReceiveMessageWithSummaryEquals(value string) error {
-	summaryValue = summary.Summary(value)
-
-	event = createSQSEvent(summaryValue)
+func iReceiveMessageWithSummaryEquals(_ string) error {
+	//event = createSQSEvent(summaryValue)
 
 	ctx = contextMock{}
 
@@ -190,12 +143,12 @@ func iReceiveMessageWithSummaryEquals(value string) error {
 }
 
 func thereAreClientsAvailableInDB(numberOfClients int) error {
-	persistedClients = []model.Client{}
+	persistedClients = []*model.Client{}
 	for i := 1; i <= numberOfClients; i++ {
 		client := model.Client{
 			Id:           uuid.NewString(),
 			Active:       true,
-			LockedUntil:  time.Now().Add(-time.Second * 15).String(),
+			LockedUntil:  time.Now().Add(-time.Second * 15),
 			Locked:       false,
 			CashAmount:   10000.0,
 			CryptoAmount: 1.0,
@@ -203,7 +156,7 @@ func thereAreClientsAvailableInDB(numberOfClients int) error {
 			SellOn:       1,
 			Symbols:      []string{"BTC", "SOL"},
 		}
-		persistedClients = append(persistedClients, client)
+		persistedClients = append(persistedClients, &client)
 	}
 
 	return nil
@@ -213,11 +166,7 @@ func handlerIsTriggered() error {
 	config.LoadTestEnv()
 	config.DependencyInjector().Logger = &loggerMock{}
 
-	handlerError = operation_hub.Main().Handle(ctx, *event)
-
-	if handlerError != nil {
-		log.Logger().Error(handlerError, "error occurred")
-	}
+	handlerError = validator.Main().Handle(ctx, *event)
 
 	return nil
 }
@@ -249,7 +198,6 @@ func snsMessagesPayloadShouldHaveAllClientIdsGotFromClientsTable() error {
 
 		if !found {
 			err := errors.New("client id should have been sent to sns")
-			log.Logger().Error(err, "client id should have been sent to sns", snsClientPublishInputs, persistedClients)
 			return err
 		}
 	}
@@ -297,27 +245,27 @@ func assertEqual(val1, val2 interface{}) error {
 	return errors.New(string(val1String) + " should be equal to " + string(val2String))
 }
 
-func createSQSEvent(summary summary.Summary) *events.SQSEvent {
-	analysisDto := dto2.AnalysisDto{
-		Summary:   summary,
-		Timestamp: time.Now().Format("2022-01-01 13:01:01"),
-	}
+//func createSQSEvent(summary summary.Summary) *events.SQSEvent {
+//	analysisDto := dto2.AnalysisDto{
+//		Summary:   summary,
+//		Timestamp: time.Now().Format("2022-01-01 13:01:01"),
+//	}
+//
+//	analysisMessage, _ := json.Marshal(analysisDto)
+//
+//	snsEventMessage, _ := json.Marshal(createSNSEvent(string(analysisMessage)))
+//
+//	return &events.SQSEvent{
+//		Records: []events.SQSMessage{
+//			{
+//				Body: string(snsEventMessage),
+//			},
+//		},
+//	}
+//}
 
-	analysisMessage, _ := json.Marshal(analysisDto)
-
-	snsEventMessage, _ := json.Marshal(createSNSEvent(string(analysisMessage)))
-
-	return &events.SQSEvent{
-		Records: []events.SQSMessage{
-			{
-				Body: string(snsEventMessage),
-			},
-		},
-	}
-}
-
-func createSNSEvent(message string) events.SNSEntity {
-	return events.SNSEntity{
-		Message: message,
-	}
-}
+//func createSNSEvent(message string) events.SNSEntity {
+//	return events.SNSEntity{
+//		Message: message,
+//	}
+//}

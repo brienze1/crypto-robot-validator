@@ -2,29 +2,37 @@ name: Dependency Check
 
 on:
   workflow_call:
+    inputs:
+      branch:
+        description: 'The branch that the workflow should run with'
+        default: 'main'
+        required: false
+        type: string
 
 jobs:
   dependency-check:
     name: Dependency Check
     runs-on: ubuntu-latest
     steps:
-#      - name: Setup cache
-#        uses: actions/cache@v3
-#        with:
-#          path: |
-#            ~/.cache/go-build
-#            ~/go/pkg/mod
-#          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-#          restore-keys: |
-#            ${{ runner.os }}-go-
-
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Setup cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
           go-version: 1.19
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Write Go list
         run: go list -json -m all > go.list

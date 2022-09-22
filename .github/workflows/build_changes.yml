@@ -8,12 +8,18 @@ on:
 jobs:
   lint:
     uses: ./.github/workflows/lint.yml
+    with:
+      branch: develop
 
   test:
     uses: ./.github/workflows/test.yml
+    with:
+      branch: develop
 
   dependency-check:
     uses: ./.github/workflows/dependency_check.yml
+    with:
+      branch: develop
 
   pull-request:
     needs:

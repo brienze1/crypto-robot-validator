@@ -7,12 +7,12 @@ import (
 )
 
 type properties struct {
-	Profile                           string
-	MinimumCryptoSellOperation        float64
-	MinimumCryptoBuyOperation         float64
-	BinanceCryptoSymbolPriceTickerUrl string
-	CryptoOperationTriggerTopicArn    string
-	Aws                               *aws
+	Profile                        string
+	MinimumCryptoSellOperation     float64
+	MinimumCryptoBuyOperation      float64
+	BiscointGetCryptoUrl           string
+	CryptoOperationTriggerTopicArn string
+	Aws                            *aws
 }
 
 type aws struct {
@@ -30,7 +30,7 @@ type awsConfig struct {
 }
 
 type dynamoDB struct {
-	ClientTableName string
+	ClientTableName *string
 }
 
 var once sync.Once
@@ -54,7 +54,7 @@ func loadProperties() *properties {
 	profile := os.Getenv("PROFILE")
 	minimumCryptoSellOperation := getDoubleEnvVariable("MINIMUM_CRYPTO_SELL_OPERATION")
 	minimumCryptoBuyOperation := getDoubleEnvVariable("MINIMUM_CRYPTO_BUY_OPERATION")
-	binanceCryptoSymbolPriceTickerUrl := os.Getenv("BINANCE_CRYPTO_SYMBOL_PRICE_TICKER_URL")
+	biscointGetCryptoUrl := os.Getenv("BINANCE_CRYPTO_SYMBOL_PRICE_TICKER_URL")
 	cryptoOperationTriggerTopicArn := os.Getenv("AWS_SNS_TOPIC_ARN_CRYPTO_OPERATIONS")
 	awsRegion := os.Getenv("AWS_REGION")
 	awsURL := os.Getenv("AWS_URL")
@@ -65,11 +65,11 @@ func loadProperties() *properties {
 	clientTableName := os.Getenv("AWS_DYNAMODB_CLIENT_TABLE_NAME")
 
 	return &properties{
-		Profile:                           profile,
-		MinimumCryptoSellOperation:        minimumCryptoSellOperation,
-		MinimumCryptoBuyOperation:         minimumCryptoBuyOperation,
-		BinanceCryptoSymbolPriceTickerUrl: binanceCryptoSymbolPriceTickerUrl,
-		CryptoOperationTriggerTopicArn:    cryptoOperationTriggerTopicArn,
+		Profile:                        profile,
+		MinimumCryptoSellOperation:     minimumCryptoSellOperation,
+		MinimumCryptoBuyOperation:      minimumCryptoBuyOperation,
+		BiscointGetCryptoUrl:           biscointGetCryptoUrl,
+		CryptoOperationTriggerTopicArn: cryptoOperationTriggerTopicArn,
 		Aws: &aws{
 			Config: &awsConfig{
 				Region:         awsRegion,
@@ -80,7 +80,7 @@ func loadProperties() *properties {
 				OverrideConfig: awsOverrideConfig,
 			},
 			DynamoDB: &dynamoDB{
-				ClientTableName: clientTableName,
+				ClientTableName: &clientTableName,
 			},
 		},
 	}

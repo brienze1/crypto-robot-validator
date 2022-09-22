@@ -2,6 +2,12 @@ name: Coverage
 
 on:
   workflow_call:
+    inputs:
+      branch:
+        description: 'The branch that the workflow should run with'
+        default: 'main'
+        required: false
+        type: string
 
 jobs:
   coverage:
@@ -25,10 +31,12 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Calc coverage
         run: |
-          go test ./... -v -covermode=count -coverprofile=coverage.out -coverpkg=.../brienze1/.../internal/delivery/...,.../brienze1/.../internal/domain/...,.../brienze1/.../internal/integration/...,.../brienze1/.../pkg/...
+          go test ./test/unit/... -v -covermode=count -coverprofile=coverage.out -coverpkg=.../brienze1/.../internal/delivery/...,.../brienze1/.../internal/domain/...,.../brienze1/.../internal/integration/...,.../brienze1/.../pkg/...
 
       - name: Convert coverage.out to coverage.lcov
         uses: jandelgado/gcov2lcov-action@v1

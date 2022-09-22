@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
-	"github.com/brienze1/crypto-robot-operation-hub/internal/operation-hub/application/properties"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/application/properties"
 	"sync"
 )
 
