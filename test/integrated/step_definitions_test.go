@@ -12,45 +12,43 @@ import (
 	"github.com/brienze1/crypto-robot-validator/internal/validator/application/properties"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/model"
 	"github.com/brienze1/crypto-robot-validator/test/mocks"
-	"github.com/cucumber/godog"
 	"github.com/google/uuid"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"time"
 )
 
-func TestFeatures(t *testing.T) {
-	suite := godog.TestSuite{
-		ScenarioInitializer: func(s *godog.ScenarioContext) {
-			InitializeScenario(s)
-		},
-		Options: &godog.Options{
-			Format:   "pretty",
-			Paths:    []string{"features"},
-			TestingT: t,
-		},
-	}
+//func TestFeatures(t *testing.T) {
+//	suite := godog.TestSuite{
+//		ScenarioInitializer: func(s *godog.ScenarioContext) {
+//			InitializeScenario(s)
+//		},
+//		Options: &godog.Options{
+//			Format:   "pretty",
+//			Paths:    []string{"features"},
+//			TestingT: t,
+//		},
+//	}
+//
+//	if suite.Run() != 0 {
+//		t.Fatal("non-zero status returned, failed to run feature tests")
+//	}
+//}
 
-	if suite.Run() != 0 {
-		t.Fatal("non-zero status returned, failed to run feature tests")
-	}
-}
-
-func InitializeScenario(ctx *godog.ScenarioContext) {
-	ctx.Step(`^test env variables were loaded$`, testEnvVariablesWereLoaded)
-	ctx.Step(`^dynamoDB is "([^"]*)"$`, dynamoDBIs)
-	ctx.Step(`^binance api is "([^"]*)"$`, binanceApiIs)
-	ctx.Step(`^sns service is "([^"]*)"$`, snsServiceIs)
-	ctx.Step(`^I receive message with summary equals "([^"]*)"$`, iReceiveMessageWithSummaryEquals)
-	ctx.Step(`^there are (\d+) clients available in DB`, thereAreClientsAvailableInDB)
-	ctx.Step(`^handler is triggered$`, handlerIsTriggered)
-	ctx.Step(`^there should be (\d+) messages sent via sns$`, thereShouldBeMessagesSentViaSns)
-	ctx.Step(`^sns messages payload should have all client_id\'s got from clients table$`, snsMessagesPayloadShouldHaveAllClientIdsGotFromClientsTable)
-	ctx.Step(`^sns messages payload symbol should be equal "([^"]*)"$`, snsMessagesPayloadSymbolShouldBeEqual)
-	ctx.Step(`^sns messages payload operation should be equal "([^"]*)"$`, snsMessagesPayloadOperationShouldBeEqual)
-	ctx.Step(`^process should exit with (\d+)$`, processShouldExitWith)
-}
+//func InitializeScenario(ctx *godog.ScenarioContext) {
+//	ctx.Step(`^test env variables were loaded$`, testEnvVariablesWereLoaded)
+//	ctx.Step(`^dynamoDB is "([^"]*)"$`, dynamoDBIs)
+//	ctx.Step(`^binance api is "([^"]*)"$`, binanceApiIs)
+//	ctx.Step(`^sns service is "([^"]*)"$`, snsServiceIs)
+//	ctx.Step(`^I receive message with summary equals "([^"]*)"$`, iReceiveMessageWithSummaryEquals)
+//	ctx.Step(`^there are (\d+) clients available in DB`, thereAreClientsAvailableInDB)
+//	ctx.Step(`^handler is triggered$`, handlerIsTriggered)
+//	ctx.Step(`^there should be (\d+) messages sent via sns$`, thereShouldBeMessagesSentViaSns)
+//	ctx.Step(`^sns messages payload should have all client_id\'s got from clients table$`, snsMessagesPayloadShouldHaveAllClientIdsGotFromClientsTable)
+//	ctx.Step(`^sns messages payload symbol should be equal "([^"]*)"$`, snsMessagesPayloadSymbolShouldBeEqual)
+//	ctx.Step(`^sns messages payload operation should be equal "([^"]*)"$`, snsMessagesPayloadOperationShouldBeEqual)
+//	ctx.Step(`^process should exit with (\d+)$`, processShouldExitWith)
+//}
 
 type (
 	loggerMock struct {
