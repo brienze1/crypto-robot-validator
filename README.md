@@ -520,7 +520,7 @@ EPAM.
 I graduated from UNESP studying Automation and Control Engineering in 2022, and I also took multiple courses on Udemy
 and Alura.
 
-My main stack is Java, but I'm also pretty good working with Kotlin and Typescript (both server side). I have quite a
+My main stack is Java, but I'm also pretty good working with Kotlin, Typescript and Go (backend only). I have quite a
 good knowledge of AWS Cloud, and I'm also very conformable working with Docker.
 
 Also, I have experience working with relational (PostgreSQL, Microsoft SQL Server, MySQL, ...) and non-relational (

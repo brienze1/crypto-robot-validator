@@ -466,7 +466,7 @@ func TestValidateLockClientFailure(t *testing.T) {
 
 	assert.NotNil(t, err, "Error should not be nil")
 	assert.Equal(t, "Lock error", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while getting data from DynamoDB Client table", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "Error while using DynamoDB Client table", err.(custom_error.BaseErrorAdapter).Description())
 	assert.Equal(t, "lock client error", err.(custom_error.BaseErrorAdapter).Error())
 	assert.Equal(t, false, lockPersistence.IsLocked(client.Id))
 	assert.Equal(t, false, client.Locked)
@@ -494,7 +494,7 @@ func TestValidateGetClientFailure(t *testing.T) {
 
 	assert.NotNil(t, err, "Error should not be nil")
 	assert.Equal(t, "GetClient error", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while getting data from DynamoDB Client table", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "Error while using DynamoDB Client table", err.(custom_error.BaseErrorAdapter).Description())
 	assert.Equal(t, "get client error", err.(custom_error.BaseErrorAdapter).Error())
 	assert.Equal(t, false, lockPersistence.IsLocked(client.Id))
 	assert.Equal(t, false, client.Locked)

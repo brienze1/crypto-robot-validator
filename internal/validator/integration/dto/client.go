@@ -20,13 +20,15 @@ type Client struct {
 // ClientDto creates a dto.Client from model.Client
 func ClientDto(client *model.Client) *Client {
 	return &Client{
-		Id: client.Id,
+		Id:     client.Id,
+		Locked: client.Locked,
 	}
 }
 
 // ToModel creates a model.Client from dto.Client
 func (c Client) ToModel() *model.Client {
 	return &model.Client{
-		Id: c.Id,
+		Id:     c.Id,
+		Locked: c.Locked,
 	}
 }

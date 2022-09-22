@@ -4,6 +4,9 @@ import (
 	"context"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/dto"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/exceptions"
 )
 
 type dynamoDBClient struct {
@@ -25,25 +28,49 @@ func DynamoDBClient() *dynamoDBClient {
 	}
 }
 
-func (d *dynamoDBClient) Scan(ctx context.Context, params *dynamodb.ScanInput, optFns ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error) {
+func (d *dynamoDBClient) Scan(_ context.Context, _ *dynamodb.ScanInput, _ ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error) {
 	return nil, nil
 }
 
-func (d *dynamoDBClient) GetItem(_ context.Context, params *dynamodb.GetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error) {
+func (d *dynamoDBClient) GetItem(_ context.Context, params *dynamodb.GetItemInput, _ ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error) {
+	d.GetItemCounter++
+
+	if d.GetItemError != nil {
+		return nil, exceptions.DynamoDBClientPersistenceError(d.GetItemError, "GetItem error")
+	}
+
 	client := map[string]string{}
 
 	_ = attributevalue.UnmarshalMap(params.Key, &client)
 
 	item := d.items[client["client_id"]]
 
-	itemOutput, _ := attributevalue.MarshalMap(item)
+	var itemOutput map[string]types.AttributeValue
+
+	if item == nil {
+		itemOutput = nil
+	} else {
+		itemOutput, _ = attributevalue.MarshalMap(item)
+	}
 
 	return &dynamodb.GetItemOutput{
 		Item: itemOutput,
 	}, nil
 }
 
-func (d *dynamoDBClient) PutItem(ctx context.Context, params *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error) {
+func (d *dynamoDBClient) PutItem(_ context.Context, params *dynamodb.PutItemInput, _ ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error) {
+	d.PutItemCounter++
+
+	if d.PutItemError != nil {
+		return nil, exceptions.DynamoDBClientPersistenceError(d.PutItemError, "PutItem error")
+	}
+
+	client := &dto.Client{}
+
+	_ = attributevalue.UnmarshalMap(params.Item, &client)
+
+	d.AddItem(client.Id, client)
+
 	return nil, nil
 }
 

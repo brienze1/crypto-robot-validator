@@ -8,6 +8,9 @@ import (
 	aws2 "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	adapters2 "github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/adapters"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/aws"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/dto"
 	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -49,7 +52,7 @@ func (s secretsManagerMock) GetSecretValue(_ context.Context, _ *secretsmanager.
 var (
 	secretsManagerService adapters.SecretsManagerServiceAdapter
 	logger                adapters2.LoggerAdapter
-	secretsManager        adapters3.SecretsManagerAdapter
+	secretsManager        adapters.SecretsManagerAdapter
 )
 
 var (
