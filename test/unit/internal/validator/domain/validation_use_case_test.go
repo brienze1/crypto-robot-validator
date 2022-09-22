@@ -269,7 +269,7 @@ func TestValidateOperationPersistenceFailure(t *testing.T) {
 
 	assert.NotNil(t, err, "Error should not be nil")
 	assert.Equal(t, "save error", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while managing data from DynamoDB Operation table", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "Error while using DynamoDB Operation table", err.(custom_error.BaseErrorAdapter).Description())
 	assert.Equal(t, "save error", err.(custom_error.BaseErrorAdapter).Error())
 	assert.Equal(t, false, lockPersistence.IsLocked(client.Id))
 	assert.Equal(t, false, client.Locked)

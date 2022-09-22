@@ -8,6 +8,7 @@ import (
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/model"
 	adapters2 "github.com/brienze1/crypto-robot-validator/internal/validator/integration/adapters"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/dto"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/exceptions"
 	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
 )
@@ -26,19 +27,23 @@ func DynamoDBOperationPersistence(logger adapters.LoggerAdapter, dynamoDB adapte
 }
 
 func (d *dynamoDBOperationPersistence) Save(operation *model.Operation) custom_error.BaseErrorAdapter {
-	clientInput, err := attributevalue.MarshalMap(operation)
+	d.logger.Info("Save operation started", operation)
+
+	operationDto := dto.OperationDto(operation)
+	operationInput, err := attributevalue.MarshalMap(operationDto)
 	if err != nil {
-		return d.abort(err, "Error while trying to marshal client.")
+		return d.abort(err, "Error while trying to marshal operation.")
 	}
 
 	_, err = d.dynamoDB.PutItem(context.TODO(), &dynamodb.PutItemInput{
-		TableName: properties.Properties().Aws.DynamoDB.ClientTableName,
-		Item:      clientInput,
+		TableName: properties.Properties().Aws.DynamoDB.OperationTableName,
+		Item:      operationInput,
 	})
 	if err != nil {
-		return d.abort(err, "Error while trying to update client.")
+		return d.abort(err, "Error while trying to update operation.")
 	}
 
+	d.logger.Info("Save operation finished", operation, operationDto)
 	return nil
 }
 

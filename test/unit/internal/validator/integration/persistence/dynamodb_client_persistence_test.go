@@ -25,7 +25,7 @@ var (
 	clientLocked    *model.Client
 )
 
-func setup() {
+func clientPersistenceSetup() {
 	config.LoadTestEnv()
 
 	clientPersistence = persistence.DynamoDBClientPersistence(logger, dynamoDBClient)
@@ -41,7 +41,7 @@ func setup() {
 }
 
 func TestGetClientsSuccess(t *testing.T) {
-	setup()
+	clientPersistenceSetup()
 
 	client, err := clientPersistence.GetClient(clientPersisted.Id)
 
@@ -54,7 +54,7 @@ func TestGetClientsSuccess(t *testing.T) {
 }
 
 func TestGetClientsClientNotFoundFailure(t *testing.T) {
-	setup()
+	clientPersistenceSetup()
 
 	client, err := clientPersistence.GetClient(uuid.NewString())
 
@@ -68,7 +68,7 @@ func TestGetClientsClientNotFoundFailure(t *testing.T) {
 }
 
 func TestGetClientsDynamoDBClientFailure(t *testing.T) {
-	setup()
+	clientPersistenceSetup()
 
 	dynamoDBClient.GetItemError = errors.New("dynamodb client error")
 
@@ -84,7 +84,7 @@ func TestGetClientsDynamoDBClientFailure(t *testing.T) {
 }
 
 func TestGetClientsUnmarshalFailure(t *testing.T) {
-	setup()
+	clientPersistenceSetup()
 
 	fakeClient := map[string]interface{}{
 		"locked": "test",
@@ -105,7 +105,7 @@ func TestGetClientsUnmarshalFailure(t *testing.T) {
 }
 
 func TestGetClientsClientLockedFailure(t *testing.T) {
-	setup()
+	clientPersistenceSetup()
 
 	dynamoDBClient.AddItem(clientLocked.Id, clientLocked)
 
@@ -121,7 +121,7 @@ func TestGetClientsClientLockedFailure(t *testing.T) {
 }
 
 func TestLockSuccess(t *testing.T) {
-	setup()
+	clientPersistenceSetup()
 
 	assert.Equal(t, false, clientUnlocked.Locked)
 
@@ -141,7 +141,7 @@ func TestLockSuccess(t *testing.T) {
 }
 
 func TestLockPutItemFailure(t *testing.T) {
-	setup()
+	clientPersistenceSetup()
 
 	dynamoDBClient.PutItemError = errors.New("lock error")
 
@@ -157,7 +157,7 @@ func TestLockPutItemFailure(t *testing.T) {
 }
 
 func TestUnlockSuccess(t *testing.T) {
-	setup()
+	clientPersistenceSetup()
 
 	assert.Equal(t, true, clientLocked.Locked)
 
@@ -180,7 +180,7 @@ func TestUnlockSuccess(t *testing.T) {
 }
 
 func TestUnlockPutItemFailure(t *testing.T) {
-	setup()
+	clientPersistenceSetup()
 
 	dynamoDBClient.PutItemError = errors.New("unlock error")
 
@@ -196,7 +196,7 @@ func TestUnlockPutItemFailure(t *testing.T) {
 }
 
 func TestLockAndUnlockSuccess(t *testing.T) {
-	setup()
+	clientPersistenceSetup()
 
 	assert.Equal(t, false, clientUnlocked.Locked)
 
