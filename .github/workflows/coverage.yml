@@ -36,7 +36,7 @@ jobs:
 
       - name: Calc coverage
         run: |
-          go test ./... -v -covermode=count -coverprofile=coverage.out -coverpkg=.../brienze1/.../internal/delivery/...,.../brienze1/.../internal/domain/...,.../brienze1/.../internal/integration/...,.../brienze1/.../pkg/...
+          go test ./... -v -covermode=count -coverprofile=coverage.out -coverpkg=.../brienze1/.../internal/.../delivery/...,.../brienze1/.../internal/.../domain/...,.../brienze1/.../internal/.../integration/...,.../brienze1/.../pkg/...
 
       - name: Convert coverage.out to coverage.lcov
         uses: jandelgado/gcov2lcov-action@v1
