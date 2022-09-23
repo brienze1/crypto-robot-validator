@@ -152,3 +152,47 @@ func TestLoggerErrorTwoMetadataSuccess(t *testing.T) {
 	assert.Contains(t, buf.String(), string(testMetadata1String))
 	assert.Contains(t, buf.String(), string(testMetadata2String))
 }
+
+func TestLoggerWarningMessageOnlySuccess(t *testing.T) {
+	setup()
+	defer func() {
+		teardown()
+	}()
+
+	logger.Warning(testError, testMessage)
+
+	assert.Contains(t, buf.String(), testError.Error())
+	assert.Contains(t, buf.String(), testMessage)
+}
+
+func TestLoggerWarningOneMetadataSuccess(t *testing.T) {
+	setup()
+	defer func() {
+		teardown()
+	}()
+
+	logger.Warning(testError, testMessage, testMetadata1)
+
+	testMetadata1String, _ := json.Marshal(testMetadata1)
+
+	assert.Contains(t, buf.String(), testError.Error())
+	assert.Contains(t, buf.String(), testMessage)
+	assert.Contains(t, buf.String(), string(testMetadata1String))
+}
+
+func TestLoggerWarningTwoMetadataSuccess(t *testing.T) {
+	setup()
+	defer func() {
+		teardown()
+	}()
+
+	logger.Warning(testError, testMessage, testMetadata1, testMetadata2)
+
+	testMetadata1String, _ := json.Marshal(testMetadata1)
+	testMetadata2String, _ := json.Marshal(testMetadata2)
+
+	assert.Contains(t, buf.String(), testError.Error())
+	assert.Contains(t, buf.String(), testMessage)
+	assert.Contains(t, buf.String(), string(testMetadata1String))
+	assert.Contains(t, buf.String(), string(testMetadata2String))
+}
