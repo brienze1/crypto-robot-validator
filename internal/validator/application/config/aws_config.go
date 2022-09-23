@@ -6,21 +6,24 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/application/properties"
 	"sync"
 )
 
 var (
-	sessionInit  sync.Once
-	snsInit      sync.Once
-	dynamoDBInit sync.Once
+	sessionInit        sync.Once
+	snsInit            sync.Once
+	dynamoDBInit       sync.Once
+	secretsManagerInit sync.Once
 )
 
 var (
-	awsConfig      *aws.Config
-	snsClient      *sns.Client
-	dynamoDBClient *dynamodb.Client
+	awsConfig            *aws.Config
+	snsClient            *sns.Client
+	dynamoDBClient       *dynamodb.Client
+	secretsManagerClient *secretsmanager.Client
 )
 
 func getConfig() *aws.Config {
@@ -84,4 +87,16 @@ func DynamoDBClient() *dynamodb.Client {
 	}
 
 	return dynamoDBClient
+}
+
+// SecretsManagerClient creates a client for Secrets Manager, used to get secrets from aws.
+func SecretsManagerClient() *secretsmanager.Client {
+	if secretsManagerClient == nil {
+		secretsManagerInit.Do(func() {
+			cfg := getConfig()
+			secretsManagerClient = secretsmanager.NewFromConfig(*cfg)
+		})
+	}
+
+	return secretsManagerClient
 }

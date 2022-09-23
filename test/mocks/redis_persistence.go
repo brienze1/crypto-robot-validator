@@ -23,11 +23,11 @@ func (r *redisPersistence) Lock(key string) custom_error.BaseErrorAdapter {
 	r.LockCounter++
 
 	if r.LockError != nil {
-		return exceptions.RedisPersistenceLockError(r.LockError, "Lock error")
+		return exceptions.RedisPersistenceLockError(r.LockError, "Lock error", false)
 	}
 
 	if _, isLocked := r.lock[key]; isLocked {
-		return exceptions.RedisPersistenceLockError(r.LockError, "key is already locked")
+		return exceptions.RedisPersistenceLockError(r.LockError, "key is already locked", true)
 	}
 
 	r.lock[key] = key
@@ -39,11 +39,11 @@ func (r *redisPersistence) Unlock(key string) custom_error.BaseErrorAdapter {
 	r.UnlockCounter++
 
 	if r.UnlockError != nil {
-		return exceptions.RedisPersistenceUnlockError(r.UnlockError, "Unlock error")
+		return exceptions.RedisPersistenceLockError(r.UnlockError, "Unlock error", true)
 	}
 
 	if _, isLocked := r.lock[key]; !isLocked {
-		return exceptions.RedisPersistenceUnlockError(r.LockError, "key is already unlocked")
+		return exceptions.RedisPersistenceLockError(r.LockError, "key is already unlocked", true)
 	}
 
 	delete(r.lock, key)

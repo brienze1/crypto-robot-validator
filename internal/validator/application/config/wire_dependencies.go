@@ -6,6 +6,7 @@ import (
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/usecase"
 	adapters2 "github.com/brienze1/crypto-robot-validator/internal/validator/integration/adapters"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/aws"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/eventservice"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/persistence"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/webservice"
@@ -20,19 +21,22 @@ var dependencyInjectorInit sync.Once
 var injector *dependencyInjector
 
 type dependencyInjector struct {
-	Logger               adapters.LoggerAdapter
-	HTTPClient           adapters2.HTTPClientAdapter
-	DynamoDBClient       adapters2.DynamoDBAdapter
-	SNSClient            adapters2.SNSAdapter
-	TimeSource           adapters.TimeAdapter
-	CryptoService        adapters.CryptoServiceAdapter
-	ClientService        adapters.ClientServiceAdapter
-	EventService         adapters.EventServiceAdapter
-	ClientPersistence    adapters.ClientPersistenceAdapter
-	OperationPersistence adapters.OperationPersistenceAdapter
-	LockPersistence      adapters.LockPersistenceAdapter
-	ValidationUseCase    adapters.ValidationUseCaseAdapter
-	Handler              adapters3.HandlerAdapter
+	Logger                adapters.LoggerAdapter
+	HTTPClient            adapters2.HTTPClientAdapter
+	DynamoDBClient        adapters2.DynamoDBAdapter
+	SNSClient             adapters2.SNSAdapter
+	SecretsManager        adapters2.SecretsManagerAdapter
+	RedisClient           adapters2.RedisAdapter
+	TimeSource            adapters.TimeAdapter
+	CryptoService         adapters.CryptoServiceAdapter
+	ClientService         adapters.ClientServiceAdapter
+	EventService          adapters.EventServiceAdapter
+	SecretsManagerService adapters2.SecretsManagerServiceAdapter
+	ClientPersistence     adapters.ClientPersistenceAdapter
+	OperationPersistence  adapters.OperationPersistenceAdapter
+	LockPersistence       adapters.LockPersistenceAdapter
+	ValidationUseCase     adapters.ValidationUseCaseAdapter
+	Handler               adapters3.HandlerAdapter
 }
 
 // DependencyInjector constructor method.
@@ -86,8 +90,17 @@ func (d *dependencyInjector) WireDependencies() *dependencyInjector {
 			d.DynamoDBClient,
 		)
 	}
+	if d.SecretsManager == nil {
+		d.SecretsManager = SecretsManagerClient()
+	}
+	if d.SecretsManagerService == nil {
+		d.SecretsManagerService = aws.SecretsManagerService(d.Logger, d.SecretsManager)
+	}
+	if d.RedisClient == nil {
+		d.RedisClient = RedisClient(d.SecretsManagerService)
+	}
 	if d.LockPersistence == nil {
-		d.LockPersistence = persistence.RedisPersistence()
+		d.LockPersistence = persistence.RedisPersistence(d.Logger, d.RedisClient)
 	}
 	if d.ValidationUseCase == nil {
 		d.ValidationUseCase = usecase.ValidationUseCase(

@@ -26,7 +26,7 @@ func SecretsManagerService(logger adapters.LoggerAdapter, secretsManager adapter
 }
 
 // GetSecret is used to retrieve secrets from secrets manager, returns *dto.Secrets.
-func (s *secretsManagerService) GetSecret(secretName string) (*dto.Secrets, error) {
+func (s *secretsManagerService) GetSecret(secretName string) (*dto.RedisSecrets, error) {
 	s.logger.Info("Get secret starting", secretName)
 
 	result, err := s.secretsManager.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{SecretId: aws.String(secretName)})
@@ -34,7 +34,7 @@ func (s *secretsManagerService) GetSecret(secretName string) (*dto.Secrets, erro
 		return nil, s.abort(err, "error while getting secret")
 	}
 
-	var secrets dto.Secrets
+	var secrets dto.RedisSecrets
 	var secretString, decodedBinarySecret string
 	if result.SecretString != nil {
 		secretString = *result.SecretString

@@ -4,6 +4,7 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type properties struct {
@@ -13,11 +14,18 @@ type properties struct {
 	BiscointGetCryptoUrl           string
 	CryptoOperationTriggerTopicArn string
 	Aws                            *aws
+	Cache                          *cache
+}
+
+type cache struct {
+	KeyTTL    time.Duration
+	KeyPrefix string
 }
 
 type aws struct {
-	Config   *awsConfig
-	DynamoDB *dynamoDB
+	Config         *awsConfig
+	DynamoDB       *dynamoDB
+	SecretsManager *secretsManager
 }
 
 type awsConfig struct {
@@ -32,6 +40,10 @@ type awsConfig struct {
 type dynamoDB struct {
 	ClientTableName    *string
 	OperationTableName *string
+}
+
+type secretsManager struct {
+	CacheSecretName string
 }
 
 var once sync.Once
@@ -65,6 +77,9 @@ func loadProperties() *properties {
 	awsOverrideConfig := getBoolEnvVariable("AWS_OVERRIDE_CONFIG")
 	clientTableName := os.Getenv("AWS_DYNAMODB_CLIENT_TABLE_NAME")
 	operationTableName := os.Getenv("AWS_DYNAMODB_OPERATION_TABLE_NAME")
+	cacheSecretName := os.Getenv("AWS_SECRETS_MANAGER_CACHE_SECRET_NAME")
+	cacheKeyTTL := getIntEnvVariable("CACHE_KEY_TTL_SECONDS")
+	cacheKeyPrefix := os.Getenv("CACHE_KEY_PREFIX")
 
 	return &properties{
 		Profile:                        profile,
@@ -85,6 +100,13 @@ func loadProperties() *properties {
 				ClientTableName:    &clientTableName,
 				OperationTableName: &operationTableName,
 			},
+			SecretsManager: &secretsManager{
+				CacheSecretName: cacheSecretName,
+			},
+		},
+		Cache: &cache{
+			KeyTTL:    time.Duration(cacheKeyTTL) * time.Second,
+			KeyPrefix: cacheKeyPrefix,
 		},
 	}
 }
@@ -102,6 +124,15 @@ func getBoolEnvVariable(key string) bool {
 	value, err := strconv.ParseBool(os.Getenv(key))
 	if err != nil {
 		return false
+	}
+
+	return value
+}
+
+func getIntEnvVariable(key string) int {
+	value, err := strconv.Atoi(os.Getenv(key))
+	if err != nil {
+		panic(err.Error() + ". Failed to load property \"" + key + "\" from environment")
 	}
 
 	return value

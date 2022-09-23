@@ -522,8 +522,8 @@ func TestValidateLockFailure(t *testing.T) {
 
 	assert.NotNil(t, err, "Error should not be nil")
 	assert.Equal(t, "Lock error", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while using cache to lock id.", err.(custom_error.BaseErrorAdapter).Description())
 	assert.Equal(t, "lock error", err.(custom_error.BaseErrorAdapter).Error())
+	assert.Equal(t, "Error while using Redis cache", err.(custom_error.BaseErrorAdapter).Description())
 	assert.Equal(t, false, lockPersistence.IsLocked(client.Id))
 	assert.Equal(t, false, client.Locked)
 	assert.Equal(t, true, client.LockedUntil.Before(time.Now()))
