@@ -110,16 +110,16 @@ func (r *redisServer) Open() (*redis.Client, error) {
 
 func (r *redisServer) Get(key string) (string, error) {
 	redisClient, _ := r.client.Open()
-	value, err := redisClient.Get(redisClient.Context(), key).Result()
-	err = redisClient.Close()
+	value, _ := redisClient.Get(redisClient.Context(), key).Result()
+	err := redisClient.Close()
 
 	return value, err
 }
 
 func (r *redisServer) Set(key string, value string) error {
 	redisClient, _ := r.client.Open()
-	_, err := redisClient.Set(redisClient.Context(), key, value, 0).Result()
-	err = redisClient.Close()
+	_, _ = redisClient.Set(redisClient.Context(), key, value, 0).Result()
+	err := redisClient.Close()
 
 	return err
 }
