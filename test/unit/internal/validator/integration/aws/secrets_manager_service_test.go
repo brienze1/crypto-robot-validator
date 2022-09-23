@@ -56,7 +56,7 @@ var (
 )
 
 var (
-	secrets dto.Secrets
+	secrets dto.RedisSecrets
 )
 
 func setup() {
@@ -65,12 +65,11 @@ func setup() {
 	secretsManagerGetSecretValueCounter = 0
 	secretsManagerGetSecretValueError = nil
 
-	secrets = dto.Secrets{
-		Host:     uuid.NewString(),
-		Port:     1234123,
-		User:     uuid.NewString(),
-		Password: uuid.NewString(),
-		DbName:   uuid.NewString(),
+	secrets = dto.RedisSecrets{
+		Address:    uuid.NewString(),
+		Password:   uuid.NewString(),
+		User:       uuid.NewString(),
+		DatabaseId: 12345,
 	}
 
 	secretsString, _ := json.Marshal(secrets)

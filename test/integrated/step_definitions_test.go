@@ -52,8 +52,6 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 }
 
 type (
-	loggerMock struct {
-	}
 	snsClientMock struct {
 	}
 	contextMock struct {
@@ -68,15 +66,6 @@ var (
 	snsClientPublishInputs  []*model.OperationRequest
 	handlerError            error
 )
-
-func (l loggerMock) Info(string, ...interface{}) {
-}
-
-func (l loggerMock) Error(error, string, ...interface{}) {
-}
-
-func (l loggerMock) SetCorrelationID(string) {
-}
 
 func (s *snsClientMock) Publish(_ context.Context, input *sns.PublishInput, _ ...func(*sns.Options)) (*sns.PublishOutput, error) {
 	snsClientPublishCounter++
@@ -163,7 +152,7 @@ func thereAreClientsAvailableInDB(numberOfClients int) error {
 
 func handlerIsTriggered() error {
 	config.LoadTestEnv()
-	config.DependencyInjector().Logger = &loggerMock{}
+	config.DependencyInjector().Logger = mocks.Logger()
 
 	handlerError = validator.Main().Handle(ctx, *event)
 

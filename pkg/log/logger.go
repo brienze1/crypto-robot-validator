@@ -22,8 +22,9 @@ type (
 )
 
 const (
-	infoLevel  string = "INFO "
-	errorLevel string = "ERROR"
+	infoLevel  string = "INFO   "
+	errorLevel string = "ERROR  "
+	warnLevel  string = "WARNING"
 )
 
 var once sync.Once
@@ -54,6 +55,11 @@ func (l *logger) Info(message string, metadata ...interface{}) {
 
 func (l *logger) Error(err error, message string, metadata ...interface{}) {
 	logMessage := l.generateLogMessage(errorLevel, message, err, metadata)
+	log.Println(logMessage)
+}
+
+func (l *logger) Warning(err error, message string, metadata ...interface{}) {
+	logMessage := l.generateLogMessage(warnLevel, message, err, metadata)
 	log.Println(logMessage)
 }
 

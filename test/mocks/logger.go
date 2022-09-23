@@ -1,9 +1,10 @@
 package mocks
 
 type loggerMock struct {
-	CorrelationId    string
-	InfoCallCounter  int
-	ErrorCallCounter int
+	CorrelationId      string
+	InfoCallCounter    int
+	ErrorCallCounter   int
+	WarningCallCounter int
 }
 
 func Logger() *loggerMock {
@@ -22,8 +23,13 @@ func (l *loggerMock) Error(error, string, ...interface{}) {
 	l.ErrorCallCounter++
 }
 
+func (l *loggerMock) Warning(error, string, ...interface{}) {
+	l.WarningCallCounter++
+}
+
 func (l *loggerMock) Reset() {
 	l.CorrelationId = ""
 	l.InfoCallCounter = 0
 	l.ErrorCallCounter = 0
+	l.WarningCallCounter = 0
 }
