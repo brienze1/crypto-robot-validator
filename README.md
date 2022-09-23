@@ -271,7 +271,7 @@ This DB uses key value to store validator client_id's locked
 
 ```json
 {
-  "VALIDATOR_LOCK_{client_id}": "{client_id}"
+  "crypto_robot.validator.lock.{client_id}": "{client_id}"
 }
 ```
 
