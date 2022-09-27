@@ -7,6 +7,6 @@ import (
 
 type ClientServiceAdapter interface {
 	// GetBalance will search for client balance on external service. ClientId is used to get the apiKey in credentials
-	// DB.
-	GetBalance(clientId string) (*model.Balance, custom_error.BaseErrorAdapter)
+	// DB. If useSimulation is set to true, will redirect the request to the simulation app (used to test the system).
+	GetBalance(clientId string, useSimulation bool) (*model.Balance, custom_error.BaseErrorAdapter)
 }

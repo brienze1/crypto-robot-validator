@@ -16,15 +16,25 @@ import (
 )
 
 type biscointWebService struct {
-	logger adapters.LoggerAdapter
-	client adapters2.HTTPClientAdapter
+	logger                 adapters.LoggerAdapter
+	client                 adapters2.HTTPClientAdapter
+	headerBuilder          adapters2.HeaderBuilderAdapter
+	biscointUrl            string
+	simulationUrl          string
+	biscointGetCryptoPath  string
+	biscointGetBalancePath string
 }
 
 // BiscointWebService class constructor.
-func BiscointWebService(logger adapters.LoggerAdapter, client adapters2.HTTPClientAdapter) *biscointWebService {
+func BiscointWebService(logger adapters.LoggerAdapter, client adapters2.HTTPClientAdapter, headerBuilder adapters2.HeaderBuilderAdapter) *biscointWebService {
 	return &biscointWebService{
-		logger: logger,
-		client: client,
+		logger:                 logger,
+		client:                 client,
+		headerBuilder:          headerBuilder,
+		biscointUrl:            properties.Properties().BiscointUrl,
+		simulationUrl:          properties.Properties().SimulationUrl,
+		biscointGetCryptoPath:  properties.Properties().BiscointGetCryptoPath,
+		biscointGetBalancePath: properties.Properties().BiscointGetBalancePath,
 	}
 }
 
@@ -38,7 +48,7 @@ const quoteKey = "quote"
 func (b *biscointWebService) GetCrypto(symbol symbol.Symbol, quote symbol.Symbol) (*model.Coin, custom_error.BaseErrorAdapter) {
 	b.logger.Info("Get crypto start", symbol, quoteKey)
 
-	request, err := http.NewRequest(http.MethodGet, properties.Properties().BiscointGetCryptoUrl, nil)
+	request, err := http.NewRequest(http.MethodGet, b.biscointUrl+b.biscointGetBalancePath, nil)
 	if err != nil {
 		return nil, b.abort(err, "Error while trying to generate Biscoint get request")
 	}
@@ -72,12 +82,42 @@ func (b *biscointWebService) GetCrypto(symbol symbol.Symbol, quote symbol.Symbol
 }
 
 // GetBalance will search for client balance on external service. ClientId is used to get the apiKey in credentials DB.
-func (b *biscointWebService) GetBalance(clientId string) (*model.Balance, custom_error.BaseErrorAdapter) {
+func (b *biscointWebService) GetBalance(clientId string, useSimulation bool) (*model.Balance, custom_error.BaseErrorAdapter) {
+	b.logger.Info("Get balance start", clientId, quoteKey)
+
+	biscointUrl := b.biscointUrl
+	if useSimulation {
+		biscointUrl = b.simulationUrl
+	}
+	request, err := http.NewRequest(http.MethodGet, biscointUrl+b.biscointGetBalancePath, nil)
+	if err != nil {
+		return nil, b.abort(err, "Error while trying to generate Biscoint get request")
+	}
+	request.Header = b.headerBuilder.BinanceHeader(clientId)
+
+	response, err := b.client.Do(request)
+	if err != nil {
+		return nil, b.abort(err, "Error while trying to get balance from Biscoint")
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(response.Body)
+
+	if response.StatusCode != http.StatusOK {
+		return nil, b.abort(err, "Biscoint API status code not Ok: "+response.Status)
+	}
+
+	var balanceResponse dto.BalanceResponse
+	if err := json.NewDecoder(response.Body).Decode(&balanceResponse); err != nil {
+		return nil, b.abort(err, "Error while trying to decode Biscoint balanceResponse API response")
+	}
+
+	b.logger.Info("Get balance finish", clientId, quoteKey)
 	return nil, nil
 }
 
 func (b *biscointWebService) abort(err error, message string, metadata ...interface{}) custom_error.BaseErrorAdapter {
 	biscointWebServiceError := exceptions.BiscointWebServiceError(err, message)
-	b.logger.Error(biscointWebServiceError, "Get crypto failed: "+message, metadata)
+	b.logger.Error(biscointWebServiceError, "Biscoint API failed: "+message, metadata)
 	return biscointWebServiceError
 }
