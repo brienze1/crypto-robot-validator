@@ -75,7 +75,7 @@ func TestGetClientsDynamoDBClientFailure(t *testing.T) {
 	client, err := clientPersistence.GetClient(uuid.NewString())
 
 	assert.Equal(t, "dynamodb client error", err.Error())
-	assert.Equal(t, "GetItem error", err.InternalError())
+	assert.Equal(t, "Error while trying to get client.", err.InternalError())
 	assert.Equal(t, "Error while using DynamoDB Client table", err.Description())
 	assert.Nilf(t, client, "Should be nil")
 	assert.Equal(t, 1, dynamoDBClient.GetItemCounter)

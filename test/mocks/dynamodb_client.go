@@ -36,10 +36,8 @@ func (d *dynamoDBClient) Scan(_ context.Context, _ *dynamodb.ScanInput, _ ...fun
 func (d *dynamoDBClient) GetItem(_ context.Context, params *dynamodb.GetItemInput, _ ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error) {
 	d.GetItemCounter++
 
-	if d.GetItemError != nil && params.TableName == properties.Properties().Aws.DynamoDB.ClientTableName {
-		return nil, exceptions.DynamoDBClientPersistenceError(d.GetItemError, "GetItem error")
-	} else if d.GetItemError != nil && params.TableName == properties.Properties().Aws.DynamoDB.OperationTableName {
-		return nil, exceptions.DynamoDBOperationPersistenceError(d.GetItemError, "GetItem error")
+	if d.GetItemError != nil {
+		return nil, d.GetItemError
 	}
 
 	request := map[string]string{}
@@ -51,6 +49,8 @@ func (d *dynamoDBClient) GetItem(_ context.Context, params *dynamodb.GetItemInpu
 		item = d.items[request["client_id"]]
 	} else if params.TableName == properties.Properties().Aws.DynamoDB.OperationTableName {
 		item = d.items[request["operation_id"]]
+	} else if params.TableName == properties.Properties().Aws.DynamoDB.CredentialsTableName {
+		item = d.items[request["client_id"]]
 	}
 
 	var itemOutput map[string]types.AttributeValue
@@ -87,6 +87,11 @@ func (d *dynamoDBClient) PutItem(_ context.Context, params *dynamodb.PutItemInpu
 		_ = attributevalue.UnmarshalMap(params.Item, &operation)
 		item = operation
 		key = operation.Id
+	} else if params.TableName == properties.Properties().Aws.DynamoDB.CredentialsTableName {
+		credentials := &dto.Credentials{}
+		_ = attributevalue.UnmarshalMap(params.Item, &credentials)
+		item = credentials
+		key = credentials.ClientId
 	}
 
 	d.AddItem(key, item)
