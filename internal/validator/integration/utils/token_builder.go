@@ -13,8 +13,11 @@ type tokenBuilder struct {
 	encryptionService adapters.EncryptionServiceAdapter
 }
 
-func TokenBuilder() *tokenBuilder {
-	return &tokenBuilder{}
+func TokenBuilder(logger adapters2.LoggerAdapter, encryptionService adapters.EncryptionServiceAdapter) *tokenBuilder {
+	return &tokenBuilder{
+		logger:            logger,
+		encryptionService: encryptionService,
+	}
 }
 
 func (t *tokenBuilder) Build(apiSecret string, endpoint string, payload any, nonce string) (string, custom_error.BaseErrorAdapter) {

@@ -47,7 +47,8 @@ type dynamoDB struct {
 }
 
 type secretsManager struct {
-	CacheSecretName string
+	CacheSecretName      string
+	EncryptionSecretName string
 }
 
 var once sync.Once
@@ -85,6 +86,7 @@ func loadProperties() *properties {
 	operationTableName := os.Getenv("AWS_DYNAMODB_OPERATION_TABLE_NAME")
 	credentialsTableName := os.Getenv("AWS_DYNAMODB_CREDENTIALS_TABLE_NAME")
 	cacheSecretName := os.Getenv("AWS_SECRETS_MANAGER_CACHE_SECRET_NAME")
+	encryptionSecretName := os.Getenv("AWS_SECRETS_MANAGER_ENCRYPTION_SECRET_NAME")
 	cacheKeyTTL := getIntEnvVariable("CACHE_KEY_TTL_SECONDS")
 	cacheKeyPrefix := os.Getenv("CACHE_KEY_PREFIX")
 
@@ -112,7 +114,8 @@ func loadProperties() *properties {
 				CredentialsTableName: &credentialsTableName,
 			},
 			SecretsManager: &secretsManager{
-				CacheSecretName: cacheSecretName,
+				CacheSecretName:      cacheSecretName,
+				EncryptionSecretName: encryptionSecretName,
 			},
 		},
 		Cache: &cache{

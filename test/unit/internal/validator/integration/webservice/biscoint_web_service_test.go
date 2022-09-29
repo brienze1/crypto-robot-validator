@@ -184,7 +184,7 @@ func TestGetBalanceSuccess(t *testing.T) {
 	assert.Equal(t, 9949.75, balance.BrlBalance)
 	assert.Equal(t, 0.00138164, balance.CryptoBalance)
 	assert.Equal(t, 1, client.DoCounter)
-	assert.Equal(t, 1, headerBuilder.BinanceHeaderCounter)
+	assert.Equal(t, 1, headerBuilder.BiscointHeaderCounter)
 	assert.Equal(t, 2, logger.InfoCallCounter)
 	assert.Equal(t, 0, logger.ErrorCallCounter)
 }
@@ -209,7 +209,7 @@ func TestGetBalanceSimulationSuccess(t *testing.T) {
 	assert.Equal(t, 9949.75, balance.BrlBalance)
 	assert.Equal(t, 0.00138164, balance.CryptoBalance)
 	assert.Equal(t, 1, client.DoCounter)
-	assert.Equal(t, 1, headerBuilder.BinanceHeaderCounter)
+	assert.Equal(t, 1, headerBuilder.BiscointHeaderCounter)
 	assert.Equal(t, 2, logger.InfoCallCounter)
 	assert.Equal(t, 0, logger.ErrorCallCounter)
 }
@@ -229,7 +229,25 @@ func TestGetBalanceCreateRequestFailed(t *testing.T) {
 	assert.Equal(t, "Error while performing Biscoint API request", err.Description())
 	assert.Nil(t, balance)
 	assert.Equal(t, 0, client.DoCounter)
-	assert.Equal(t, 0, headerBuilder.BinanceHeaderCounter)
+	assert.Equal(t, 0, headerBuilder.BiscointHeaderCounter)
+	assert.Equal(t, 1, logger.InfoCallCounter)
+	assert.Equal(t, 1, logger.ErrorCallCounter)
+}
+
+func TestGetBalanceBuildHeaderFailed(t *testing.T) {
+	setup()
+	defer teardown()
+
+	headerBuilder.BiscointHeaderError = errors.New("error building header")
+
+	balance, err := biscointWebService.GetBalance(uuid.NewString(), false)
+
+	assert.Equal(t, "error building header", err.Error())
+	assert.Equal(t, "header builder error", err.InternalError())
+	assert.Equal(t, "Error while building header", err.Description())
+	assert.Nil(t, balance)
+	assert.Equal(t, 0, client.DoCounter)
+	assert.Equal(t, 1, headerBuilder.BiscointHeaderCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
 	assert.Equal(t, 1, logger.ErrorCallCounter)
 }
@@ -247,7 +265,7 @@ func TestGetBalanceDoRequestFailed(t *testing.T) {
 	assert.Equal(t, "Error while performing Biscoint API request", err.Description())
 	assert.Nil(t, balance)
 	assert.Equal(t, 1, client.DoCounter)
-	assert.Equal(t, 1, headerBuilder.BinanceHeaderCounter)
+	assert.Equal(t, 1, headerBuilder.BiscointHeaderCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
 	assert.Equal(t, 1, logger.ErrorCallCounter)
 }
@@ -265,12 +283,12 @@ func TestGetBalanceStatusFailed(t *testing.T) {
 	assert.Equal(t, "Error while performing Biscoint API request", err.Description())
 	assert.Nil(t, balance)
 	assert.Equal(t, 1, client.DoCounter)
-	assert.Equal(t, 1, headerBuilder.BinanceHeaderCounter)
+	assert.Equal(t, 1, headerBuilder.BiscointHeaderCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
 	assert.Equal(t, 1, logger.ErrorCallCounter)
 }
 
-func TestGetBalanceDecodeFailed(t *testing.T) {
+func TestGetBalanceBRLDecodeFailed(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -290,12 +308,12 @@ func TestGetBalanceDecodeFailed(t *testing.T) {
 	assert.Equal(t, "Error while performing Biscoint API request", err.Description())
 	assert.Nil(t, balance)
 	assert.Equal(t, 1, client.DoCounter)
-	assert.Equal(t, 1, headerBuilder.BinanceHeaderCounter)
+	assert.Equal(t, 1, headerBuilder.BiscointHeaderCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
 	assert.Equal(t, 1, logger.ErrorCallCounter)
 }
 
-func TestGetBalanceToModelFailed(t *testing.T) {
+func TestGetBalanceToModelBRLFailed(t *testing.T) {
 	setup()
 	defer teardown()
 
@@ -315,7 +333,32 @@ func TestGetBalanceToModelFailed(t *testing.T) {
 	assert.Equal(t, "Error while performing Biscoint API request", err.Description())
 	assert.Nil(t, balance)
 	assert.Equal(t, 1, client.DoCounter)
-	assert.Equal(t, 1, headerBuilder.BinanceHeaderCounter)
+	assert.Equal(t, 1, headerBuilder.BiscointHeaderCounter)
+	assert.Equal(t, 1, logger.InfoCallCounter)
+	assert.Equal(t, 1, logger.ErrorCallCounter)
+}
+
+func TestGetBalanceToModelBTCFailed(t *testing.T) {
+	setup()
+	defer teardown()
+
+	client.ServerResponse = `
+		{
+			"message": "",
+			"data": {
+				"BRL": "1000.00",
+    			"BTC": "error"
+			}
+		}`
+
+	balance, err := biscointWebService.GetBalance(uuid.NewString(), false)
+
+	assert.Equal(t, "strconv.ParseFloat: parsing \"error\": invalid syntax", err.Error())
+	assert.Equal(t, "Could not convert Biscoint Get Balance response to model", err.InternalError())
+	assert.Equal(t, "Error while performing Biscoint API request", err.Description())
+	assert.Nil(t, balance)
+	assert.Equal(t, 1, client.DoCounter)
+	assert.Equal(t, 1, headerBuilder.BiscointHeaderCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
 	assert.Equal(t, 1, logger.ErrorCallCounter)
 }

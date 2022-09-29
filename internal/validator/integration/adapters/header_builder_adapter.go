@@ -1,7 +1,10 @@
 package adapters
 
-import "net/http"
+import (
+	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
+	"net/http"
+)
 
 type HeaderBuilderAdapter interface {
-	BinanceHeader(clientId string) http.Header
+	BiscointHeader(clientId string, endpoint string, payload any) (http.Header, custom_error.BaseErrorAdapter)
 }
