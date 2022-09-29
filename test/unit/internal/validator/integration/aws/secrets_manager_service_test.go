@@ -5,7 +5,6 @@ import (
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/adapters"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/aws"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/dto"
-	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
 	"github.com/brienze1/crypto-robot-validator/test/mocks"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -59,9 +58,9 @@ func TestGetSecretFromStringFailure(t *testing.T) {
 	secret := &dto.RedisSecrets{}
 	err := secretsManagerService.GetSecret("secretName", secret)
 
-	assert.Equal(t, "json: cannot unmarshal string into Go value of type dto.RedisSecrets", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "error while unmarshalling secret string", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while trying to get secret from secrets manager", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "json: cannot unmarshal string into Go value of type dto.RedisSecrets", err.Error())
+	assert.Equal(t, "error while unmarshalling secret string", err.InternalError())
+	assert.Equal(t, "Error while trying to get secret from secrets manager", err.Description())
 	assert.Equal(t, 1, secretsManager.GetSecretValueCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
 	assert.Equal(t, 1, logger.ErrorCallCounter)
@@ -91,9 +90,9 @@ func TestGetSecretFromBinaryUnmarshalFailure(t *testing.T) {
 	secret := &dto.RedisSecrets{}
 	err := secretsManagerService.GetSecret("secretName", secret)
 
-	assert.Equal(t, "unexpected end of JSON input", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "error while unmarshalling secret binary", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while trying to get secret from secrets manager", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "unexpected end of JSON input", err.Error())
+	assert.Equal(t, "error while unmarshalling secret binary", err.InternalError())
+	assert.Equal(t, "Error while trying to get secret from secrets manager", err.Description())
 	assert.Equal(t, 1, secretsManager.GetSecretValueCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
 	assert.Equal(t, 1, logger.ErrorCallCounter)
@@ -107,9 +106,9 @@ func TestGetSecretSecretsManagerFailure(t *testing.T) {
 	secret := &dto.RedisSecrets{}
 	err := secretsManagerService.GetSecret("secretName", secret)
 
-	assert.Equal(t, "error test", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, "error while getting secret", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error while trying to get secret from secrets manager", err.(custom_error.BaseErrorAdapter).Description())
+	assert.Equal(t, "error test", err.Error())
+	assert.Equal(t, "error while getting secret", err.InternalError())
+	assert.Equal(t, "Error while trying to get secret from secrets manager", err.Description())
 	assert.Equal(t, 1, secretsManager.GetSecretValueCounter)
 	assert.Equal(t, 1, logger.InfoCallCounter)
 	assert.Equal(t, 1, logger.ErrorCallCounter)

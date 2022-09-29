@@ -9,6 +9,7 @@ import (
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
 	adapters2 "github.com/brienze1/crypto-robot-validator/internal/validator/integration/adapters"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/exceptions"
+	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
 )
 
 type secretsManagerService struct {
@@ -25,7 +26,7 @@ func SecretsManagerService(logger adapters.LoggerAdapter, secretsManager adapter
 }
 
 // GetSecret is used to retrieve secrets from secrets manager, returns *dto.Secrets.
-func (s *secretsManagerService) GetSecret(secretName string, secretObject any) error {
+func (s *secretsManagerService) GetSecret(secretName string, secretObject any) custom_error.BaseErrorAdapter {
 	s.logger.Info("Get secret starting", secretName)
 
 	result, err := s.secretsManager.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{SecretId: aws.String(secretName)})
@@ -57,7 +58,7 @@ func (s *secretsManagerService) GetSecret(secretName string, secretObject any) e
 	return nil
 }
 
-func (s *secretsManagerService) abort(err error, message string) error {
+func (s *secretsManagerService) abort(err error, message string) custom_error.BaseErrorAdapter {
 	secretsManagerError := exceptions.SecretsManagerError(err, message)
 	s.logger.Error(secretsManagerError, "Get secret failed: "+message)
 	return secretsManagerError

@@ -3,55 +3,79 @@ package utils
 import (
 	"crypto"
 	"crypto/aes"
+	"crypto/cipher"
 	"crypto/hmac"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/exceptions"
 	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
+	"io"
 )
 
 type encryptionService struct {
 	logger adapters.LoggerAdapter
 }
 
-func EncryptionService() *encryptionService {
-	return &encryptionService{}
+func EncryptionService(logger adapters.LoggerAdapter) *encryptionService {
+	return &encryptionService{
+		logger: logger,
+	}
 }
 
 func (e *encryptionService) AESDecrypt(hexEncryptedString string, secret string) (string, custom_error.BaseErrorAdapter) {
 	e.logger.Info("AESDecrypt started")
 
-	encryptedString, err := hex.DecodeString(hexEncryptedString)
+	ciphertext, err := hex.DecodeString(hexEncryptedString)
 	if err != nil {
 		return "", e.abort(err, "Error while trying to decode hex string")
 	}
 
-	cipher, err := aes.NewCipher([]byte(secret))
+	block, err := aes.NewCipher([]byte(secret))
 	if err != nil {
-		return "", e.abort(err, "Error while trying to create aes cipher")
+		return "", e.abort(err, "Could not create new cipher")
 	}
 
-	decryptedString := make([]byte, len(encryptedString))
-	cipher.Decrypt(decryptedString, encryptedString)
+	if len(ciphertext) < aes.BlockSize {
+		return "", e.abort(nil, "Text is too short")
+	}
+
+	iv := ciphertext[:aes.BlockSize]
+
+	ciphertext = ciphertext[aes.BlockSize:]
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+
+	stream.XORKeyStream(ciphertext, ciphertext)
 
 	e.logger.Info("AESDecrypt finished")
-	return string(decryptedString), nil
+	return string(ciphertext), nil
 }
 
 func (e *encryptionService) AESEncrypt(decryptedString string, secret string) (string, custom_error.BaseErrorAdapter) {
 	e.logger.Info("AESEncrypt started")
 
-	cipher, err := aes.NewCipher([]byte(secret))
+	plaintext := []byte(decryptedString)
+
+	block, err := aes.NewCipher([]byte(secret))
 	if err != nil {
-		return "", e.abort(err, "Error while trying to create cipher")
+		return "", e.abort(err, "Could not create new cipher")
 	}
 
-	encryptedString := make([]byte, len(decryptedString))
+	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 
-	cipher.Encrypt(encryptedString, []byte(decryptedString))
+	iv := ciphertext[:aes.BlockSize]
 
-	hexEncryptedString := hex.EncodeToString(encryptedString)
+	if _, err = io.ReadFull(rand.Reader, iv); err != nil {
+		return "", e.abort(err, "Error filling iv with random values")
+	}
+
+	stream := cipher.NewCFBEncrypter(block, iv)
+
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
+
+	hexEncryptedString := hex.EncodeToString(ciphertext)
 
 	e.logger.Info("AESEncrypt finished")
 	return hexEncryptedString, nil
