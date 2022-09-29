@@ -48,7 +48,7 @@ const quoteKey = "quote"
 func (b *biscointWebService) GetCrypto(symbol symbol.Symbol, quote symbol.Symbol) (*model.Coin, custom_error.BaseErrorAdapter) {
 	b.logger.Info("Get crypto start", symbol, quoteKey)
 
-	request, err := http.NewRequest(http.MethodGet, b.biscointUrl+b.biscointGetBalancePath, nil)
+	request, err := http.NewRequest(http.MethodGet, b.biscointUrl+b.biscointGetCryptoPath, nil)
 	if err != nil {
 		return nil, b.abort(err, "Error while trying to generate Biscoint get request")
 	}
@@ -93,6 +93,7 @@ func (b *biscointWebService) GetBalance(clientId string, useSimulation bool) (*m
 	if err != nil {
 		return nil, b.abort(err, "Error while trying to generate Biscoint get request")
 	}
+
 	request.Header = b.headerBuilder.BinanceHeader(clientId)
 
 	response, err := b.client.Do(request)
@@ -112,8 +113,13 @@ func (b *biscointWebService) GetBalance(clientId string, useSimulation bool) (*m
 		return nil, b.abort(err, "Error while trying to decode Biscoint balanceResponse API response")
 	}
 
-	b.logger.Info("Get balance finish", clientId, quoteKey)
-	return nil, nil
+	balance, err := balanceResponse.ToModel()
+	if err != nil {
+		return nil, b.abort(err, "Could not convert Biscoint Get Balance response to model")
+	}
+
+	b.logger.Info("Get balance finish", clientId, quoteKey, balance)
+	return balance, nil
 }
 
 func (b *biscointWebService) abort(err error, message string, metadata ...interface{}) custom_error.BaseErrorAdapter {

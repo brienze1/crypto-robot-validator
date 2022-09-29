@@ -41,8 +41,9 @@ type awsConfig struct {
 }
 
 type dynamoDB struct {
-	ClientTableName    *string
-	OperationTableName *string
+	ClientTableName      *string
+	OperationTableName   *string
+	CredentialsTableName *string
 }
 
 type secretsManager struct {
@@ -82,6 +83,7 @@ func loadProperties() *properties {
 	awsOverrideConfig := getBoolEnvVariable("AWS_OVERRIDE_CONFIG")
 	clientTableName := os.Getenv("AWS_DYNAMODB_CLIENT_TABLE_NAME")
 	operationTableName := os.Getenv("AWS_DYNAMODB_OPERATION_TABLE_NAME")
+	credentialsTableName := os.Getenv("AWS_DYNAMODB_CREDENTIALS_TABLE_NAME")
 	cacheSecretName := os.Getenv("AWS_SECRETS_MANAGER_CACHE_SECRET_NAME")
 	cacheKeyTTL := getIntEnvVariable("CACHE_KEY_TTL_SECONDS")
 	cacheKeyPrefix := os.Getenv("CACHE_KEY_PREFIX")
@@ -105,8 +107,9 @@ func loadProperties() *properties {
 				OverrideConfig: awsOverrideConfig,
 			},
 			DynamoDB: &dynamoDB{
-				ClientTableName:    &clientTableName,
-				OperationTableName: &operationTableName,
+				ClientTableName:      &clientTableName,
+				OperationTableName:   &operationTableName,
+				CredentialsTableName: &credentialsTableName,
 			},
 			SecretsManager: &secretsManager{
 				CacheSecretName: cacheSecretName,
