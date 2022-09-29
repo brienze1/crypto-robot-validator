@@ -94,7 +94,10 @@ func (b *biscointWebService) GetBalance(clientId string, useSimulation bool) (*m
 		return nil, b.abort(err, "Error while trying to generate Biscoint get request")
 	}
 
-	request.Header = b.headerBuilder.BinanceHeader(clientId)
+	request.Header, err = b.headerBuilder.BiscointHeader(clientId, b.biscointGetBalancePath, `{}`)
+	if err != nil {
+		return nil, b.abort(err, "Error while trying to generate Biscoint header")
+	}
 
 	response, err := b.client.Do(request)
 	if err != nil {

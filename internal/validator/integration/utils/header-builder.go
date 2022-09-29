@@ -19,18 +19,32 @@ type headerBuilder struct {
 	tokenBuilder           adapters.TokenBuilderAdapter
 }
 
-func HeaderBuilder() *headerBuilder {
-	return &headerBuilder{}
+func HeaderBuilder(
+	logger adapters2.LoggerAdapter,
+	credentialsPersistence adapters.CredentialsPersistenceAdapter,
+	secretsManagerService adapters.SecretsManagerServiceAdapter,
+	encryptionService adapters.EncryptionServiceAdapter,
+	tokenBuilder adapters.TokenBuilderAdapter,
+) *headerBuilder {
+	return &headerBuilder{
+		logger:                 logger,
+		credentialsPersistence: credentialsPersistence,
+		secretsManagerService:  secretsManagerService,
+		encryptionService:      encryptionService,
+		tokenBuilder:           tokenBuilder,
+	}
 }
 
-func (h *headerBuilder) BinanceHeader(clientId string, payload any) (http.Header, custom_error.BaseErrorAdapter) {
+func (h *headerBuilder) BiscointHeader(clientId string, endpoint string, payload any) (http.Header, custom_error.BaseErrorAdapter) {
+	h.logger.Info("BiscointHeader started", clientId, endpoint, payload)
+
 	credentials, err := h.credentialsPersistence.GetCredentials(clientId)
 	if err != nil {
 		return nil, h.abort(err, "Error while getting client credentials")
 	}
 
 	encryptionSecrets := &dto.EncryptionSecrets{}
-	err = h.secretsManagerService.GetSecret(properties.Properties().Aws.SecretsManager.CacheSecretName, encryptionSecrets)
+	err = h.secretsManagerService.GetSecret(properties.Properties().Aws.SecretsManager.EncryptionSecretName, encryptionSecrets)
 	if err != nil {
 		return nil, h.abort(err, "Error while getting encryption key")
 	}
@@ -41,21 +55,23 @@ func (h *headerBuilder) BinanceHeader(clientId string, payload any) (http.Header
 	}
 
 	nonce := time_utils.Epoch()
-	token, err := h.tokenBuilder.Build(credentials.ApiKey, decryptedSecret, payload, nonce)
+	token, err := h.tokenBuilder.Build(decryptedSecret, endpoint, payload, nonce)
 	if err != nil {
 		return nil, h.abort(err, "Error while trying to generate token")
 	}
 
-	return http.Header{
-		"Content-Type": {"application/json"},
-		"BSCNT-NONCE":  {nonce},
-		"BSCNT-APIKEY": {credentials.ApiKey},
-		"BSCNT-SIGN":   {token},
-	}, nil
+	headers := http.Header{}
+	headers.Set("Content-Type", "application/json")
+	headers.Set("BSCNT-NONCE", nonce)
+	headers.Set("BSCNT-APIKEY", credentials.ApiKey)
+	headers.Set("BSCNT-SIGN", token)
+
+	h.logger.Info("BiscointHeader finished", clientId, endpoint, payload)
+	return headers, nil
 }
 
-func (b *headerBuilder) abort(err error, message string, metadata ...interface{}) custom_error.BaseErrorAdapter {
+func (h *headerBuilder) abort(err error, message string, metadata ...interface{}) custom_error.BaseErrorAdapter {
 	headerBuilderError := exceptions.HeaderBuilderError(err, message)
-	b.logger.Error(headerBuilderError, "Biscoint API failed: "+message, metadata)
+	h.logger.Error(headerBuilderError, "Header builder failed: "+message, metadata)
 	return headerBuilderError
 }
