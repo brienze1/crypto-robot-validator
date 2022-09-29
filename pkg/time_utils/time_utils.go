@@ -1,6 +1,7 @@
 package time_utils
 
 import (
+	"strconv"
 	"time"
 )
 
@@ -25,6 +26,10 @@ func Time() *timeSource {
 
 func (t *timeSource) Now() time.Time {
 	return t.now
+}
+
+func Epoch() string {
+	return strconv.FormatInt(time.Now().Unix(), 10)
 }
 
 func (t *timeSource) Tomorrow() time.Time {

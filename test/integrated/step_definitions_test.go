@@ -105,7 +105,7 @@ func binanceApiIs(status string) error {
 		//_, _ = w.Write(response)
 	}))
 
-	properties.Properties().BiscointGetCryptoUrl = server.URL
+	properties.Properties().BiscointUrl = server.URL
 
 	return nil
 }

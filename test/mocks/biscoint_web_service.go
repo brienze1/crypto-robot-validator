@@ -37,7 +37,7 @@ func (b *biscointWebService) GetCrypto(symbol symbol.Symbol, quote symbol.Symbol
 	}, nil
 }
 
-func (b *biscointWebService) GetBalance(clientId string) (*model.Balance, custom_error.BaseErrorAdapter) {
+func (b *biscointWebService) GetBalance(string, bool) (*model.Balance, custom_error.BaseErrorAdapter) {
 	b.GetBalanceCounter++
 
 	if b.GetBalanceError != nil {

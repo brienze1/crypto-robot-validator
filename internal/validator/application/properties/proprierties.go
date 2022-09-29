@@ -11,7 +11,10 @@ type properties struct {
 	Profile                        string
 	MinimumCryptoSellOperation     float64
 	MinimumCryptoBuyOperation      float64
-	BiscointGetCryptoUrl           string
+	BiscointUrl                    string
+	SimulationUrl                  string
+	BiscointGetCryptoPath          string
+	BiscointGetBalancePath         string
 	CryptoOperationTriggerTopicArn string
 	Aws                            *aws
 	Cache                          *cache
@@ -38,8 +41,9 @@ type awsConfig struct {
 }
 
 type dynamoDB struct {
-	ClientTableName    *string
-	OperationTableName *string
+	ClientTableName      *string
+	OperationTableName   *string
+	CredentialsTableName *string
 }
 
 type secretsManager struct {
@@ -67,7 +71,9 @@ func loadProperties() *properties {
 	profile := os.Getenv("PROFILE")
 	minimumCryptoSellOperation := getDoubleEnvVariable("MINIMUM_CRYPTO_SELL_OPERATION")
 	minimumCryptoBuyOperation := getDoubleEnvVariable("MINIMUM_CRYPTO_BUY_OPERATION")
-	biscointGetCryptoUrl := os.Getenv("BISCOINT_CRYPTO_URL")
+	biscointUrl := os.Getenv("BISCOINT_CRYPTO_URL")
+	biscointGetCryptoPath := os.Getenv("BISCOINT_CRYPTO_GET_CRYPTO_PATH")
+	biscointGetBalancePath := os.Getenv("BISCOINT_CRYPTO_GET_BALANCE_PATH")
 	cryptoOperationTriggerTopicArn := os.Getenv("AWS_SNS_TOPIC_ARN_CRYPTO_OPERATIONS")
 	awsRegion := os.Getenv("AWS_REGION")
 	awsURL := os.Getenv("AWS_URL")
@@ -77,6 +83,7 @@ func loadProperties() *properties {
 	awsOverrideConfig := getBoolEnvVariable("AWS_OVERRIDE_CONFIG")
 	clientTableName := os.Getenv("AWS_DYNAMODB_CLIENT_TABLE_NAME")
 	operationTableName := os.Getenv("AWS_DYNAMODB_OPERATION_TABLE_NAME")
+	credentialsTableName := os.Getenv("AWS_DYNAMODB_CREDENTIALS_TABLE_NAME")
 	cacheSecretName := os.Getenv("AWS_SECRETS_MANAGER_CACHE_SECRET_NAME")
 	cacheKeyTTL := getIntEnvVariable("CACHE_KEY_TTL_SECONDS")
 	cacheKeyPrefix := os.Getenv("CACHE_KEY_PREFIX")
@@ -85,7 +92,10 @@ func loadProperties() *properties {
 		Profile:                        profile,
 		MinimumCryptoSellOperation:     minimumCryptoSellOperation,
 		MinimumCryptoBuyOperation:      minimumCryptoBuyOperation,
-		BiscointGetCryptoUrl:           biscointGetCryptoUrl,
+		SimulationUrl:                  biscointUrl,
+		BiscointUrl:                    biscointUrl,
+		BiscointGetCryptoPath:          biscointGetCryptoPath,
+		BiscointGetBalancePath:         biscointGetBalancePath,
 		CryptoOperationTriggerTopicArn: cryptoOperationTriggerTopicArn,
 		Aws: &aws{
 			Config: &awsConfig{
@@ -97,8 +107,9 @@ func loadProperties() *properties {
 				OverrideConfig: awsOverrideConfig,
 			},
 			DynamoDB: &dynamoDB{
-				ClientTableName:    &clientTableName,
-				OperationTableName: &operationTableName,
+				ClientTableName:      &clientTableName,
+				OperationTableName:   &operationTableName,
+				CredentialsTableName: &credentialsTableName,
 			},
 			SecretsManager: &secretsManager{
 				CacheSecretName: cacheSecretName,

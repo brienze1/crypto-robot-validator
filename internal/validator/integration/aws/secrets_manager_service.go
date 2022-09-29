@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
 	adapters2 "github.com/brienze1/crypto-robot-validator/internal/validator/integration/adapters"
-	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/dto"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/exceptions"
 )
 
@@ -26,37 +25,36 @@ func SecretsManagerService(logger adapters.LoggerAdapter, secretsManager adapter
 }
 
 // GetSecret is used to retrieve secrets from secrets manager, returns *dto.Secrets.
-func (s *secretsManagerService) GetSecret(secretName string) (*dto.RedisSecrets, error) {
+func (s *secretsManagerService) GetSecret(secretName string, secretObject any) error {
 	s.logger.Info("Get secret starting", secretName)
 
 	result, err := s.secretsManager.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{SecretId: aws.String(secretName)})
 	if err != nil {
-		return nil, s.abort(err, "error while getting secret")
+		return s.abort(err, "error while getting secret")
 	}
 
-	var secrets dto.RedisSecrets
 	var secretString, decodedBinarySecret string
 	if result.SecretString != nil {
 		secretString = *result.SecretString
-		err := json.Unmarshal([]byte(secretString), &secrets)
+		err := json.Unmarshal([]byte(secretString), secretObject)
 		if err != nil {
-			return nil, s.abort(err, "error while unmarshalling secret string")
+			return s.abort(err, "error while unmarshalling secret string")
 		}
 	} else {
 		decodedBinarySecretBytes := make([]byte, base64.StdEncoding.DecodedLen(len(result.SecretBinary)))
 		decodedLen, err := base64.StdEncoding.Decode(decodedBinarySecretBytes, result.SecretBinary)
 		if err != nil {
-			return nil, s.abort(err, "error while decoding secret binary")
+			return s.abort(err, "error while decoding secret binary")
 		}
 		decodedBinarySecret = string(decodedBinarySecretBytes[:decodedLen])
-		err = json.Unmarshal([]byte(decodedBinarySecret), &secrets)
+		err = json.Unmarshal([]byte(decodedBinarySecret), secretObject)
 		if err != nil {
-			return nil, s.abort(err, "error while unmarshalling secret binary")
+			return s.abort(err, "error while unmarshalling secret binary")
 		}
 	}
 
 	s.logger.Info("Get secret finished", secretName)
-	return &secrets, nil
+	return nil
 }
 
 func (s *secretsManagerService) abort(err error, message string) error {

@@ -28,6 +28,7 @@ type dependencyInjector struct {
 	SecretsManager        adapters2.SecretsManagerAdapter
 	RedisClient           adapters2.RedisAdapter
 	TimeSource            adapters.TimeAdapter
+	HeaderBuilder         adapters2.HeaderBuilderAdapter
 	CryptoService         adapters.CryptoServiceAdapter
 	ClientService         adapters.ClientServiceAdapter
 	EventService          adapters.EventServiceAdapter
@@ -69,11 +70,14 @@ func (d *dependencyInjector) WireDependencies() *dependencyInjector {
 	if d.TimeSource == nil {
 		d.TimeSource = time_utils.Time()
 	}
+	//if d.HeaderBuilder == nil {
+	//	//d.HeaderBuilder = utils.HeaderBuilder()
+	//}
 	if d.CryptoService == nil {
-		d.CryptoService = webservice.BiscointWebService(d.Logger, d.HTTPClient)
+		d.CryptoService = webservice.BiscointWebService(d.Logger, d.HTTPClient, d.HeaderBuilder)
 	}
 	if d.ClientService == nil {
-		d.ClientService = webservice.BiscointWebService(d.Logger, d.HTTPClient)
+		d.ClientService = webservice.BiscointWebService(d.Logger, d.HTTPClient, d.HeaderBuilder)
 	}
 	if d.EventService == nil {
 		d.EventService = eventservice.SNSEventService(d.Logger, d.SNSClient)

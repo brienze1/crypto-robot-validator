@@ -22,7 +22,8 @@ func RedisClient(secretsManager adapters.SecretsManagerServiceAdapter) *redisCli
 
 func (r *redisClient) Open() (*redis.Client, error) {
 	if r.cacheConfig == nil {
-		cacheConfig, err := r.secretsManager.GetSecret(properties.Properties().Aws.SecretsManager.CacheSecretName)
+		cacheConfig := &dto.RedisSecrets{}
+		err := r.secretsManager.GetSecret(properties.Properties().Aws.SecretsManager.CacheSecretName, cacheConfig)
 		if err != nil {
 			panic(err)
 		}

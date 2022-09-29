@@ -60,7 +60,7 @@ func (v *validationUseCase) Validate(operationRequest *model.OperationRequest) e
 		return v.abort(err, "Error while trying to lock client DB", client.Id, client)
 	}
 
-	balance, err := v.clientService.GetBalance(client.Id)
+	balance, err := v.clientService.GetBalance(client.Id, false)
 	if err != nil {
 		return v.abort(err, "Error while trying to lock client DB", client.Id, client)
 	}

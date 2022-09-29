@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"github.com/brienze1/crypto-robot-validator/pkg/log"
 	"net/http"
 	"net/http/httptest"
 )
@@ -33,6 +34,7 @@ func (h *httpClient) Do(req *http.Request) (*http.Response, error) {
 func (h *httpClient) SetupServer() {
 	h.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(h.StatusCode)
+		log.Logger().Info("GET called", h.ServerResponse)
 		_, _ = w.Write([]byte(h.ServerResponse))
 	}))
 }
