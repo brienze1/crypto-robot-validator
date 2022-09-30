@@ -45,18 +45,20 @@ func (d *dynamoDBClientPersistence) GetClient(clientId string) (*model.Client, c
 		return nil, d.abort(err, "Client not found.")
 	}
 
-	var client *dto.Client
-	err = attributevalue.UnmarshalMap(response.Item, &client)
+	var clientDto *dto.Client
+	err = attributevalue.UnmarshalMap(response.Item, &clientDto)
 	if err != nil {
 		return nil, d.abort(err, "Error while trying to unmarshal get client response.")
 	}
 
-	if client.Locked {
+	if clientDto.Locked {
 		return nil, d.abort(err, "Client is locked.")
 	}
 
+	client := clientDto.ToModel()
+
 	d.logger.Info("GetClient finished", clientId, client)
-	return client.ToModel(), nil
+	return client, nil
 }
 
 // Lock will update model.Client setting flag locked as true on client DynamoDB repository. Returns error if client is

@@ -68,6 +68,12 @@ func Properties() *properties {
 	return propertiesInstance
 }
 
+func (p *properties) Reload() *properties {
+	propertiesInstance = loadProperties()
+
+	return propertiesInstance
+}
+
 func loadProperties() *properties {
 	profile := os.Getenv("PROFILE")
 	minimumCryptoSellOperation := getDoubleEnvVariable("MINIMUM_CRYPTO_SELL_OPERATION")

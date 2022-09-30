@@ -50,7 +50,7 @@ func (d *dynamoDBCredentialsPersistence) GetCredentials(clientId string) (*dto.C
 		return nil, d.abort(err, "Error while trying to unmarshal get credentials response.")
 	}
 
-	d.logger.Info("GetCredentials finished", clientId, credentials)
+	d.logger.Info("GetCredentials finished", clientId)
 	return credentials, nil
 }
 

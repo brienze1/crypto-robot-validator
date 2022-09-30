@@ -80,7 +80,7 @@ func setup() {
 		BuyOn:                     2,
 		SellOn:                    2,
 		Symbols:                   []string{"BTC"},
-		Summary: []model.Summary{
+		Summary: []*model.Summary{
 			{
 				Type:         summary_type.Day,
 				Day:          time.Now().Day(),

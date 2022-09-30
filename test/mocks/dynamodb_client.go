@@ -11,21 +11,25 @@ import (
 )
 
 type dynamoDBClient struct {
-	ScanCounter    int
-	ScanError      error
-	ScanOutput     *dynamodb.ScanOutput
-	GetItemCounter int
-	GetItemError   error
-	GetItemOutput  *dynamodb.GetItemOutput
-	PutItemCounter int
-	PutItemError   error
-	PutItemOutput  *dynamodb.PutItemOutput
-	items          map[string]interface{}
+	ScanCounter      int
+	ScanError        error
+	ScanOutput       *dynamodb.ScanOutput
+	GetItemCounter   int
+	GetItemError     error
+	GetItemOutput    *dynamodb.GetItemOutput
+	PutItemCounter   int
+	PutItemError     error
+	PutItemOutput    *dynamodb.PutItemOutput
+	clientItems      map[string]interface{}
+	credentialsItems map[string]interface{}
+	operationsItems  map[string]interface{}
 }
 
 func DynamoDBClient() *dynamoDBClient {
 	return &dynamoDBClient{
-		items: map[string]interface{}{},
+		clientItems:      map[string]interface{}{},
+		credentialsItems: map[string]interface{}{},
+		operationsItems:  map[string]interface{}{},
 	}
 }
 
@@ -46,11 +50,11 @@ func (d *dynamoDBClient) GetItem(_ context.Context, params *dynamodb.GetItemInpu
 
 	var item interface{}
 	if params.TableName == properties.Properties().Aws.DynamoDB.ClientTableName {
-		item = d.items[request["client_id"]]
+		item = d.clientItems[request["client_id"]]
 	} else if params.TableName == properties.Properties().Aws.DynamoDB.OperationTableName {
-		item = d.items[request["operation_id"]]
+		item = d.operationsItems[request["operation_id"]]
 	} else if params.TableName == properties.Properties().Aws.DynamoDB.CredentialsTableName {
-		item = d.items[request["client_id"]]
+		item = d.credentialsItems[request["client_id"]]
 	}
 
 	var itemOutput map[string]types.AttributeValue
@@ -94,13 +98,19 @@ func (d *dynamoDBClient) PutItem(_ context.Context, params *dynamodb.PutItemInpu
 		key = credentials.ClientId
 	}
 
-	d.AddItem(key, item)
+	d.AddItem(key, item, params.TableName)
 
 	return nil, nil
 }
 
-func (d *dynamoDBClient) AddItem(key string, value interface{}) {
-	d.items[key] = value
+func (d *dynamoDBClient) AddItem(key string, value interface{}, tableName *string) {
+	if tableName == properties.Properties().Aws.DynamoDB.ClientTableName {
+		d.clientItems[key] = value
+	} else if tableName == properties.Properties().Aws.DynamoDB.OperationTableName {
+		d.operationsItems[key] = value
+	} else if tableName == properties.Properties().Aws.DynamoDB.CredentialsTableName {
+		d.credentialsItems[key] = value
+	}
 }
 
 func (d *dynamoDBClient) Reset() {
@@ -113,5 +123,7 @@ func (d *dynamoDBClient) Reset() {
 	d.PutItemCounter = 0
 	d.PutItemError = nil
 	d.PutItemOutput = &dynamodb.PutItemOutput{}
-	d.items = map[string]interface{}{}
+	d.clientItems = map[string]interface{}{}
+	d.credentialsItems = map[string]interface{}{}
+	d.operationsItems = map[string]interface{}{}
 }

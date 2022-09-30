@@ -24,28 +24,30 @@ func TestNowTime(t *testing.T) {
 
 func TestTomorrowTime(t *testing.T) {
 	timeNow := time.Now()
+	tomorrow := time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day()+1, 00, 0, 0, 0, timeNow.Location())
 
-	now := timeUtils.Tomorrow()
+	newTomorrow := timeUtils.Tomorrow()
 
-	assert.Equal(t, timeNow.Year(), now.Year())
-	assert.Equal(t, timeNow.Month(), now.Month())
-	assert.Equal(t, timeNow.Day()+1, now.Day())
-	assert.Equal(t, 0, now.Hour())
-	assert.Equal(t, 0, now.Minute())
-	assert.Equal(t, 0, now.Second())
+	assert.Equal(t, tomorrow.Year(), newTomorrow.Year())
+	assert.Equal(t, tomorrow.Month(), newTomorrow.Month())
+	assert.Equal(t, tomorrow.Day(), newTomorrow.Day())
+	assert.Equal(t, tomorrow.Hour(), newTomorrow.Hour())
+	assert.Equal(t, tomorrow.Minute(), newTomorrow.Minute())
+	assert.Equal(t, tomorrow.Second(), newTomorrow.Second())
 }
 
 func TestNextMonthTime(t *testing.T) {
 	timeNow := time.Now()
+	nextMonth := time.Date(timeNow.Year(), time.Month(int(timeNow.Month())+1), 1, 00, 0, 0, 0, timeNow.Location())
 
-	now := timeUtils.NextMonth()
+	newNextMonth := timeUtils.NextMonth()
 
-	assert.Equal(t, timeNow.Year(), now.Year())
-	assert.Equal(t, time.Month(int(timeNow.Month())+1), now.Month())
-	assert.Equal(t, 1, now.Day())
-	assert.Equal(t, 0, now.Hour())
-	assert.Equal(t, 0, now.Minute())
-	assert.Equal(t, 0, now.Second())
+	assert.Equal(t, nextMonth.Year(), newNextMonth.Year())
+	assert.Equal(t, nextMonth.Month(), newNextMonth.Month())
+	assert.Equal(t, nextMonth.Day(), newNextMonth.Day())
+	assert.Equal(t, nextMonth.Hour(), newNextMonth.Hour())
+	assert.Equal(t, nextMonth.Minute(), newNextMonth.Minute())
+	assert.Equal(t, nextMonth.Second(), newNextMonth.Second())
 }
 
 func TestIsTodayTrue(t *testing.T) {

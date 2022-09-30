@@ -15,20 +15,20 @@ type Client struct {
 	Active                    bool
 	LockedUntil               time.Time
 	Locked                    bool
-	CashAvailable             float64 //new
+	CashAvailable             float64
 	CashAmount                float64
 	CashReserved              float64
-	CryptoAvailable           float64 //new
+	CryptoAvailable           float64
 	CryptoAmount              float64
 	CryptoReserved            float64
-	OperationStopLoss         float64 //new
-	DayStopLoss               float64 //new
-	MonthStopLoss             float64 //new
-	OperationAmountPercentage float64 //new
+	OperationStopLoss         float64
+	DayStopLoss               float64
+	MonthStopLoss             float64
+	OperationAmountPercentage float64
 	BuyOn                     int
 	SellOn                    int
 	Symbols                   []string
-	Summary                   []Summary
+	Summary                   []*Summary
 }
 
 // SetBalance will update client current balance, will take account of reserved values.
@@ -54,7 +54,6 @@ func (c *Client) CreateOperation(request *OperationRequest, coin *Coin) (*Operat
 
 	operation := NewOperation(c.OperationStopLoss)
 
-	//TODO: validate client operation execution
 	switch request.Operation {
 	case operation_type.Buy:
 		if coin.GetMinOperationValue(operation_type.Buy) > c.CashAmount || coin.GetMinOperationValue(operation_type.Buy) > c.CashAvailable {

@@ -9,6 +9,7 @@ import (
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/aws"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/eventservice"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/persistence"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/utils"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/webservice"
 	"github.com/brienze1/crypto-robot-validator/pkg/log"
 	"github.com/brienze1/crypto-robot-validator/pkg/time_utils"
@@ -21,23 +22,26 @@ var dependencyInjectorInit sync.Once
 var injector *dependencyInjector
 
 type dependencyInjector struct {
-	Logger                adapters.LoggerAdapter
-	HTTPClient            adapters2.HTTPClientAdapter
-	DynamoDBClient        adapters2.DynamoDBAdapter
-	SNSClient             adapters2.SNSAdapter
-	SecretsManager        adapters2.SecretsManagerAdapter
-	RedisClient           adapters2.RedisAdapter
-	TimeSource            adapters.TimeAdapter
-	HeaderBuilder         adapters2.HeaderBuilderAdapter
-	CryptoService         adapters.CryptoServiceAdapter
-	ClientService         adapters.ClientServiceAdapter
-	EventService          adapters.EventServiceAdapter
-	SecretsManagerService adapters2.SecretsManagerServiceAdapter
-	ClientPersistence     adapters.ClientPersistenceAdapter
-	OperationPersistence  adapters.OperationPersistenceAdapter
-	LockPersistence       adapters.LockPersistenceAdapter
-	ValidationUseCase     adapters.ValidationUseCaseAdapter
-	Handler               adapters3.HandlerAdapter
+	Logger                 adapters.LoggerAdapter
+	EncryptionService      adapters2.EncryptionServiceAdapter
+	HTTPClient             adapters2.HTTPClientAdapter
+	DynamoDBClient         adapters2.DynamoDBAdapter
+	SNSClient              adapters2.SNSAdapter
+	SecretsManager         adapters2.SecretsManagerAdapter
+	RedisClient            adapters2.RedisAdapter
+	TimeSource             adapters.TimeAdapter
+	EventService           adapters.EventServiceAdapter
+	SecretsManagerService  adapters2.SecretsManagerServiceAdapter
+	ClientPersistence      adapters.ClientPersistenceAdapter
+	CredentialsPersistence adapters2.CredentialsPersistenceAdapter
+	OperationPersistence   adapters.OperationPersistenceAdapter
+	LockPersistence        adapters.LockPersistenceAdapter
+	TokenBuilder           adapters2.TokenBuilderAdapter
+	HeaderBuilder          adapters2.HeaderBuilderAdapter
+	CryptoService          adapters.CryptoServiceAdapter
+	ClientService          adapters.ClientServiceAdapter
+	ValidationUseCase      adapters.ValidationUseCaseAdapter
+	Handler                adapters3.HandlerAdapter
 }
 
 // DependencyInjector constructor method.
@@ -56,6 +60,9 @@ func (d *dependencyInjector) WireDependencies() *dependencyInjector {
 	if d.Logger == nil {
 		d.Logger = log.Logger()
 	}
+	if d.EncryptionService == nil {
+		d.EncryptionService = utils.EncryptionService(d.Logger)
+	}
 	if d.HTTPClient == nil {
 		d.HTTPClient = &http.Client{
 			Timeout: 30 * time.Second,
@@ -70,29 +77,17 @@ func (d *dependencyInjector) WireDependencies() *dependencyInjector {
 	if d.TimeSource == nil {
 		d.TimeSource = time_utils.Time()
 	}
-	//if d.HeaderBuilder == nil {
-	//	//d.HeaderBuilder = utils.HeaderBuilder()
-	//}
-	if d.CryptoService == nil {
-		d.CryptoService = webservice.BiscointWebService(d.Logger, d.HTTPClient, d.HeaderBuilder)
-	}
-	if d.ClientService == nil {
-		d.ClientService = webservice.BiscointWebService(d.Logger, d.HTTPClient, d.HeaderBuilder)
-	}
 	if d.EventService == nil {
 		d.EventService = eventservice.SNSEventService(d.Logger, d.SNSClient)
 	}
 	if d.ClientPersistence == nil {
-		d.ClientPersistence = persistence.DynamoDBClientPersistence(
-			d.Logger,
-			d.DynamoDBClient,
-		)
+		d.ClientPersistence = persistence.DynamoDBClientPersistence(d.Logger, d.DynamoDBClient)
+	}
+	if d.CredentialsPersistence == nil {
+		d.CredentialsPersistence = persistence.DynamoDBCredentialsPersistence(d.Logger, d.DynamoDBClient)
 	}
 	if d.OperationPersistence == nil {
-		d.OperationPersistence = persistence.DynamoDBOperationPersistence(
-			d.Logger,
-			d.DynamoDBClient,
-		)
+		d.OperationPersistence = persistence.DynamoDBOperationPersistence(d.Logger, d.DynamoDBClient)
 	}
 	if d.SecretsManager == nil {
 		d.SecretsManager = SecretsManagerClient()
@@ -105,6 +100,18 @@ func (d *dependencyInjector) WireDependencies() *dependencyInjector {
 	}
 	if d.LockPersistence == nil {
 		d.LockPersistence = persistence.RedisPersistence(d.Logger, d.RedisClient)
+	}
+	if d.TokenBuilder == nil {
+		d.TokenBuilder = utils.TokenBuilder(d.Logger, d.EncryptionService)
+	}
+	if d.HeaderBuilder == nil {
+		d.HeaderBuilder = utils.HeaderBuilder(d.Logger, d.CredentialsPersistence, d.SecretsManagerService, d.EncryptionService, d.TokenBuilder)
+	}
+	if d.CryptoService == nil {
+		d.CryptoService = webservice.BiscointWebService(d.Logger, d.HTTPClient, d.HeaderBuilder)
+	}
+	if d.ClientService == nil {
+		d.ClientService = webservice.BiscointWebService(d.Logger, d.HTTPClient, d.HeaderBuilder)
 	}
 	if d.ValidationUseCase == nil {
 		d.ValidationUseCase = usecase.ValidationUseCase(
