@@ -1,7 +1,7 @@
 package dto
 
 type Credentials struct {
-	ClientId  string `dynamodbav:"client_id"`
-	ApiKey    string `dynamodbav:"api_key"`
-	ApiSecret string `dynamodbav:"api_secret"`
+	ClientId  string `json:"client_id" dynamodbav:"client_id"`
+	ApiKey    string `json:"api_key" dynamodbav:"api_key"`
+	ApiSecret string `json:"api_secret" dynamodbav:"api_secret"`
 }

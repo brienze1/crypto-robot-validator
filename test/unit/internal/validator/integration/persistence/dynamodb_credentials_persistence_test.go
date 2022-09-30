@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"errors"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/application/properties"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/adapters"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/dto"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/persistence"
@@ -31,7 +32,7 @@ func setupCredentialsPersistence() {
 		ApiSecret: uuid.NewString(),
 	}
 
-	dynamoDBCredentials.AddItem(credentials.ClientId, credentials)
+	dynamoDBCredentials.AddItem(credentials.ClientId, credentials, properties.Properties().Aws.DynamoDB.CredentialsTableName)
 
 	credentialsPersistence = persistence.DynamoDBCredentialsPersistence(loggerCredentials, dynamoDBCredentials)
 }
@@ -92,7 +93,7 @@ func TestGetCredentialsUnmarshalFailure(t *testing.T) {
 		"client_id": false,
 	}
 
-	dynamoDBCredentials.AddItem(credentials.ClientId, fakeClient)
+	dynamoDBCredentials.AddItem(credentials.ClientId, fakeClient, properties.Properties().Aws.DynamoDB.CredentialsTableName)
 
 	credentialsPersisted, err := credentialsPersistence.GetCredentials(credentials.ClientId)
 

@@ -10,6 +10,7 @@ import (
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/dto"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/exceptions"
 	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
+	"github.com/brienze1/crypto-robot-validator/pkg/log"
 	"io"
 	"net/http"
 	"net/url"
@@ -52,6 +53,8 @@ func (b *biscointWebService) GetCrypto(symbol symbol.Symbol, quote symbol.Symbol
 	if err != nil {
 		return nil, b.abort(err, "Error while trying to generate Biscoint get request")
 	}
+
+	log.Logger().Info("request", request)
 
 	query := url.Values{}
 	query.Add(symbolKey, symbol.Name())

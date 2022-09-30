@@ -22,6 +22,7 @@ var (
 
 func setup() {
 	config.LoadTestEnv()
+	properties.Properties().Reload()
 
 	logger.Reset()
 	client.Reset()
@@ -41,7 +42,7 @@ func TestGetCryptoSuccess(t *testing.T) {
 	setup()
 	defer teardown()
 
-	client.ServerResponse = `
+	client.GetCryptoResponse = `
 		{
 			"message": "",
 			"data": {
@@ -133,7 +134,7 @@ func TestGetCryptoDecodeFailure(t *testing.T) {
 	setup()
 	defer teardown()
 
-	client.ServerResponse = `
+	client.GetCryptoResponse = `
 		{
 			"message": "",
 			"data": {
@@ -168,7 +169,7 @@ func TestGetBalanceSuccess(t *testing.T) {
 	setup()
 	defer teardown()
 
-	client.ServerResponse = `
+	client.GetBalanceResponse = `
 		{
 			"message": "",
 			"data": {
@@ -193,7 +194,7 @@ func TestGetBalanceSimulationSuccess(t *testing.T) {
 	setup()
 	defer teardown()
 
-	client.ServerResponse = `
+	client.GetBalanceResponse = `
 		{
 			"message": "",
 			"data": {
@@ -292,7 +293,7 @@ func TestGetBalanceBRLDecodeFailed(t *testing.T) {
 	setup()
 	defer teardown()
 
-	client.ServerResponse = `
+	client.GetBalanceResponse = `
 		{
 			"message": "",
 			"data": {
@@ -317,7 +318,7 @@ func TestGetBalanceToModelBRLFailed(t *testing.T) {
 	setup()
 	defer teardown()
 
-	client.ServerResponse = `
+	client.GetBalanceResponse = `
 		{
 			"message": "",
 			"data": {
@@ -342,7 +343,7 @@ func TestGetBalanceToModelBTCFailed(t *testing.T) {
 	setup()
 	defer teardown()
 
-	client.ServerResponse = `
+	client.GetBalanceResponse = `
 		{
 			"message": "",
 			"data": {

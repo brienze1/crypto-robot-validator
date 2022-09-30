@@ -1,17 +1,18 @@
 package mocks
 
 import (
-	"github.com/brienze1/crypto-robot-validator/pkg/log"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/application/properties"
 	"net/http"
 	"net/http/httptest"
 )
 
 type httpClient struct {
-	DoCounter      int
-	DoError        error
-	Server         *httptest.Server
-	StatusCode     int
-	ServerResponse string
+	DoCounter          int
+	DoError            error
+	Server             *httptest.Server
+	StatusCode         int
+	GetCryptoResponse  string
+	GetBalanceResponse string
 }
 
 func HttpClient() *httpClient {
@@ -34,8 +35,14 @@ func (h *httpClient) Do(req *http.Request) (*http.Response, error) {
 func (h *httpClient) SetupServer() {
 	h.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(h.StatusCode)
-		log.Logger().Info("GET called", h.ServerResponse)
-		_, _ = w.Write([]byte(h.ServerResponse))
+		var response []byte
+		if r.URL.Path == properties.Properties().BiscointGetBalancePath {
+			response = []byte(h.GetBalanceResponse)
+		} else if r.URL.Path == properties.Properties().BiscointGetCryptoPath {
+			response = []byte(h.GetCryptoResponse)
+		}
+
+		_, _ = w.Write(response)
 	}))
 }
 
@@ -52,4 +59,6 @@ func (h *httpClient) Reset() {
 	h.DoCounter = 0
 	h.DoError = nil
 	h.StatusCode = 200
+	h.GetCryptoResponse = ""
+	h.GetBalanceResponse = ""
 }

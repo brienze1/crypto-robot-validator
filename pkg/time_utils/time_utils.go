@@ -24,7 +24,27 @@ func Time() *timeSource {
 	}
 }
 
+func From(date string) *timeSource {
+	now, err := time.Parse(time.Now().String(), date)
+	if err != nil {
+		now = time.Now()
+	}
+
+	return &timeSource{
+		year:     now.Year(),
+		day:      now.Day(),
+		month:    now.Month(),
+		location: now.Location(),
+		now:      now,
+	}
+}
+
 func (t *timeSource) Now() time.Time {
+	t.now = time.Now()
+	return t.now
+}
+
+func (t *timeSource) Value() time.Time {
 	return t.now
 }
 

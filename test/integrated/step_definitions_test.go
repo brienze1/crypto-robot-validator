@@ -3,257 +3,245 @@ package integrated
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/brienze1/crypto-robot-validator/internal/validator"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/application/config"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/application/properties"
-	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/model"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/dto"
 	"github.com/brienze1/crypto-robot-validator/test/mocks"
 	"github.com/cucumber/godog"
 	"github.com/google/uuid"
-	"net/http"
-	"net/http/httptest"
-	"time"
+	"github.com/stretchr/testify/assert"
+	"strconv"
+	"testing"
 )
 
-//func TestFeatures(t *testing.T) {
-//	suite := godog.TestSuite{
-//		ScenarioInitializer: func(s *godog.ScenarioContext) {
-//			InitializeScenario(s)
-//		},
-//		Options: &godog.Options{
-//			Format:   "pretty",
-//			Paths:    []string{"features"},
-//			TestingT: t,
-//		},
-//	}
-//
-//	if suite.Run() != 0 {
-//		t.Fatal("non-zero status returned, failed to run feature tests")
-//	}
-//}
+func TestFeatures(test *testing.T) {
+	t = test
+	suite := godog.TestSuite{
+		ScenarioInitializer: func(s *godog.ScenarioContext) {
+			InitializeScenario(s)
+		},
+		Options: &godog.Options{
+			Format:   "pretty",
+			Paths:    []string{"features"},
+			TestingT: t,
+		},
+	}
+
+	if suite.Run() != 0 {
+		t.Fatal("non-zero status returned, failed to run feature tests")
+	}
+}
 
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^test env variables were loaded$`, testEnvVariablesWereLoaded)
-	ctx.Step(`^dynamoDB is "([^"]*)"$`, dynamoDBIs)
-	ctx.Step(`^binance api is "([^"]*)"$`, binanceApiIs)
-	ctx.Step(`^sns service is "([^"]*)"$`, snsServiceIs)
-	ctx.Step(`^I receive message with summary equals "([^"]*)"$`, iReceiveMessageWithSummaryEquals)
-	ctx.Step(`^there are (\d+) clients available in DB`, thereAreClientsAvailableInDB)
-	ctx.Step(`^handler is triggered$`, handlerIsTriggered)
+	ctx.Step(`^dynamoDB is up$`, dynamoDBIsUp)
+	ctx.Step(`^redis is up$`, redisIsUp)
+	ctx.Step(`^biscoint api is up$`, biscointApiIsUp)
+	ctx.Step(`^sns service is up$`, snsServiceIsUp)
+	ctx.Step(`^secrets manager service is up$`, secretsManagerServiceIsUp)
+	ctx.Step(`^there is a client available on DynamoDB with client id "([^"]*)"$`, thereIsAClientAvailableOnDynamoDBWithClientId)
+	ctx.Step(`^client available "([^"]*)" balance is (\d+)\.(\d+)$`, clientAvailableBalanceIs)
+	ctx.Step(`^client reserved "([^"]*)" balance is (\d+)\.(\d+)$`, clientReservedBalanceIs)
+	ctx.Step(`^client "([^"]*)" balance is (\d+)\.(\d+) on biscoint$`, clientBalanceIsOnBiscoint)
+	ctx.Step(`^crypto current "([^"]*)" value is (\d+)\.(\d+) on biscoint$`, cryptoCurrentValueIsOnBiscoint)
+	ctx.Step(`^the following credentials available for client id "([^"]*)"$`, theFollowingCredentialsAvailableForClientId)
+	ctx.Step(`^the following message is received$`, theFollowingMessageIsReceived)
 	ctx.Step(`^there should be (\d+) messages sent via sns$`, thereShouldBeMessagesSentViaSns)
-	ctx.Step(`^sns messages payload should have all client_id\'s got from clients table$`, snsMessagesPayloadShouldHaveAllClientIdsGotFromClientsTable)
-	ctx.Step(`^sns messages payload symbol should be equal "([^"]*)"$`, snsMessagesPayloadSymbolShouldBeEqual)
-	ctx.Step(`^sns messages payload operation should be equal "([^"]*)"$`, snsMessagesPayloadOperationShouldBeEqual)
 	ctx.Step(`^process should exit with (\d+)$`, processShouldExitWith)
 }
 
-type (
-	snsClientMock struct {
-	}
-	contextMock struct {
-		context.Context
-	}
+var (
+	dynamoDB             = mocks.DynamoDBClient()
+	biscointApi          = mocks.HttpClient()
+	snsClient            = mocks.SNSClient()
+	secretsManagerClient = mocks.SecretsManager()
 )
 
 var (
-	persistedClients        []*model.Client
-	snsClientError          error
-	snsClientPublishCounter = 0
-	snsClientPublishInputs  []*model.OperationRequest
-	handlerError            error
+	t         *testing.T
+	client    *dto.Client
+	balance   *dto.BalanceResponse
+	coin      *dto.CoinResponse
+	handleErr error
 )
 
-func (s *snsClientMock) Publish(_ context.Context, input *sns.PublishInput, _ ...func(*sns.Options)) (*sns.PublishOutput, error) {
-	snsClientPublishCounter++
-	request := model.OperationRequest{}
-	_ = json.Unmarshal([]byte(*input.Message), &request)
-	snsClientPublishInputs = append(snsClientPublishInputs, &request)
-	return nil, snsClientError
-}
-
-func (ctx contextMock) Value(any) any {
-	return &lambdacontext.LambdaContext{
-		AwsRequestID: uuid.NewString(),
-	}
-}
-
-var (
-	ctx   contextMock
-	event *events.SQSEvent
-)
-
-func testEnvVariablesWereLoaded() {
+func testEnvVariablesWereLoaded() error {
 	config.LoadTestEnv()
-}
-
-func dynamoDBIs(_ string) error {
-	config.DependencyInjector().DynamoDBClient = mocks.DynamoDBClient()
-
 	return nil
 }
 
-func binanceApiIs(status string) error {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if status != "up" {
-			http.Error(w, "error test", 500)
-		}
-
-		//_, _ = w.Write(response)
-	}))
-
-	properties.Properties().BiscointUrl = server.URL
-
+func dynamoDBIsUp() error {
+	config.DependencyInjector().DynamoDBClient = dynamoDB
 	return nil
 }
 
-func snsServiceIs(status string) error {
-	snsClientPublishCounter = 0
-	snsClientPublishInputs = []*model.OperationRequest{}
-	config.DependencyInjector().SNSClient = &snsClientMock{}
+func redisIsUp() error {
+	config.DependencyInjector().RedisClient = mocks.RedisServer()
+	return nil
+}
 
-	if status != "up" {
-		snsClientError = errors.New("sns client not up")
+func biscointApiIsUp() error {
+	balance = &dto.BalanceResponse{
+		Balance: dto.Balance{
+			BRL: "0.0",
+			BTC: "0.0",
+		},
 	}
 
-	return nil
-}
-
-func iReceiveMessageWithSummaryEquals(_ string) error {
-	//event = createSQSEvent(summaryValue)
-
-	ctx = contextMock{}
-
-	return nil
-}
-
-func thereAreClientsAvailableInDB(numberOfClients int) error {
-	persistedClients = []*model.Client{}
-	for i := 1; i <= numberOfClients; i++ {
-		client := model.Client{
-			Id:           uuid.NewString(),
-			Active:       true,
-			LockedUntil:  time.Now().Add(-time.Second * 15),
-			Locked:       false,
-			CashAmount:   10000.0,
-			CryptoAmount: 1.0,
-			BuyOn:        1,
-			SellOn:       1,
-			Symbols:      []string{"BTC", "SOL"},
-		}
-		persistedClients = append(persistedClients, &client)
+	coin = &dto.CoinResponse{
+		Message: "",
+		Coin: dto.Coin{
+			Symbol:    "BTC",
+			Quote:     "BRL",
+			BuyValue:  100000.00,
+			SellValue: 99000.00,
+		},
 	}
 
+	biscointApi.SetupServer()
+	balanceResponse, _ := json.Marshal(balance)
+	coinResponse, _ := json.Marshal(coin)
+	biscointApi.GetBalanceResponse = string(balanceResponse)
+	biscointApi.GetCryptoResponse = string(coinResponse)
+	properties.Properties().BiscointUrl = biscointApi.GetUrl()
 	return nil
 }
 
-func handlerIsTriggered() error {
-	config.LoadTestEnv()
-	config.DependencyInjector().Logger = mocks.Logger()
-
-	handlerError = validator.Main().Handle(ctx, *event)
-
+func snsServiceIsUp() error {
+	config.DependencyInjector().SNSClient = snsClient
 	return nil
+}
+
+func secretsManagerServiceIsUp() error {
+	encryptionSecret := &dto.EncryptionSecrets{
+		EncryptionKey: "9y$B?E(H+MbQeThWmZq4t7w!z%C*F)J@",
+	}
+	secretsManagerClient.SetSecret(properties.Properties().Aws.SecretsManager.EncryptionSecretName, encryptionSecret)
+	config.DependencyInjector().SecretsManager = secretsManagerClient
+	return nil
+}
+
+func thereIsAClientAvailableOnDynamoDBWithClientId(clientId string) error {
+	client = &dto.Client{
+		Id:      clientId,
+		Active:  true,
+		Symbols: []string{"BTC"},
+	}
+
+	dynamoDB.AddItem(clientId, client, properties.Properties().Aws.DynamoDB.ClientTableName)
+	return nil
+}
+
+func clientAvailableBalanceIs(balanceType string, value float64) error {
+	if balanceType == "brl" {
+		client.CashAvailable = value
+		dynamoDB.AddItem(client.Id, client, properties.Properties().Aws.DynamoDB.ClientTableName)
+	} else if balanceType == "btc" {
+		client.CryptoAvailable = value
+		dynamoDB.AddItem(client.Id, client, properties.Properties().Aws.DynamoDB.ClientTableName)
+	}
+	return nil
+}
+
+func clientReservedBalanceIs(balanceType string, value float64) error {
+	if balanceType == "brl" {
+		client.CashReserved = value
+		dynamoDB.AddItem(client.Id, client, properties.Properties().Aws.DynamoDB.ClientTableName)
+	} else if balanceType == "btc" {
+		client.CryptoReserved = value
+		dynamoDB.AddItem(client.Id, client, properties.Properties().Aws.DynamoDB.ClientTableName)
+	}
+	return nil
+}
+
+func clientBalanceIsOnBiscoint(balanceType string, value float64) error {
+	if balanceType == "brl" {
+		balance.Balance.BRL = strconv.FormatFloat(value, 'f', 2, 64)
+		balanceResponse, _ := json.Marshal(balance)
+		biscointApi.GetBalanceResponse = string(balanceResponse)
+	} else if balanceType == "btc" {
+		balance.Balance.BTC = strconv.FormatFloat(value, 'f', 8, 64)
+		balanceResponse, _ := json.Marshal(balance)
+		biscointApi.GetBalanceResponse = string(balanceResponse)
+	}
+	return nil
+}
+
+func cryptoCurrentValueIsOnBiscoint(operationType string, value float64) error {
+	if operationType == "buy" {
+		coin.Coin.BuyValue = value
+		coinResponse, _ := json.Marshal(coin)
+		biscointApi.GetCryptoResponse = string(coinResponse)
+	} else if operationType == "sell" {
+		coin.Coin.SellValue = value
+		coinResponse, _ := json.Marshal(coin)
+		biscointApi.GetCryptoResponse = string(coinResponse)
+	}
+	return nil
+}
+
+func theFollowingCredentialsAvailableForClientId(clientId string, credentialsJson *godog.DocString) error {
+	var credentials dto.Credentials
+	_ = json.Unmarshal([]byte(credentialsJson.Content), &credentials)
+	dynamoDB.AddItem(clientId, credentials, properties.Properties().Aws.DynamoDB.CredentialsTableName)
+	return nil
+}
+
+func theFollowingMessageIsReceived(messageReceived *godog.DocString) error {
+	event := createSQSEvent(messageReceived.Content)
+	ctx := createContext()
+
+	return validator.Main().Handle(ctx, event)
 }
 
 func thereShouldBeMessagesSentViaSns(numberOfMessages int) error {
-	err := assertEqual(snsClientPublishCounter, numberOfMessages)
-	if err != nil {
-		return err
-	}
-
-	err = assertEqual(len(snsClientPublishInputs), numberOfMessages)
-	if err != nil {
-		return err
-	}
-
-	return err
-}
-
-func snsMessagesPayloadShouldHaveAllClientIdsGotFromClientsTable() error {
-	for _, client := range persistedClients {
-		found := false
-
-		for _, request := range snsClientPublishInputs {
-			err := assertEqual(request.ClientId, client.Id)
-			if err == nil {
-				found = true
-			}
-		}
-
-		if !found {
-			err := errors.New("client id should have been sent to sns")
-			return err
-		}
-	}
-
-	return nil
-}
-
-func snsMessagesPayloadSymbolShouldBeEqual(value string) error {
-	for _, request := range snsClientPublishInputs {
-		err := assertEqual(request.Symbol, value)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func snsMessagesPayloadOperationShouldBeEqual(value string) error {
-	for _, request := range snsClientPublishInputs {
-		err := assertEqual(request.Operation, value)
-		if err != nil {
-			return err
-		}
-	}
-
+	assert.Equal(t, numberOfMessages, snsClient.NumberOfMessagesSent)
 	return nil
 }
 
 func processShouldExitWith(status int) error {
-	if status == 0 && handlerError != nil {
-		return errors.New("should have exited with status 0 but instead finished with:" + handlerError.Error())
-	} else if status == 1 && handlerError == nil {
-		return errors.New("should have exited with status 1 but instead finished with 0")
+	if status == 0 {
+		assert.Nil(t, handleErr)
+	} else if status == 1 {
+		assert.NotNil(t, handleErr)
 	}
 	return nil
 }
 
-func assertEqual(val1, val2 interface{}) error {
-	if val1 == val2 {
-		return nil
+func createSQSEvent(message string) events.SQSEvent {
+	snsEventMessage, _ := json.Marshal(createSNSEvent(message))
+
+	return events.SQSEvent{
+		Records: []events.SQSMessage{
+			{
+				Body: string(snsEventMessage),
+			},
+		},
 	}
-	val1String, _ := json.Marshal(val1)
-	val2String, _ := json.Marshal(val2)
-	return errors.New(string(val1String) + " should be equal to " + string(val2String))
 }
 
-//func createSQSEvent(summary summary.Summary) *events.SQSEvent {
-//	analysisDto := dto2.AnalysisDto{
-//		Summary:   summary,
-//		Timestamp: time.Now().Format("2022-01-01 13:01:01"),
-//	}
-//
-//	analysisMessage, _ := json.Marshal(analysisDto)
-//
-//	snsEventMessage, _ := json.Marshal(createSNSEvent(string(analysisMessage)))
-//
-//	return &events.SQSEvent{
-//		Records: []events.SQSMessage{
-//			{
-//				Body: string(snsEventMessage),
-//			},
-//		},
-//	}
-//}
+func createSNSEvent(message string) events.SNSEntity {
+	return events.SNSEntity{
+		Message: message,
+	}
+}
 
-//func createSNSEvent(message string) events.SNSEntity {
-//	return events.SNSEntity{
-//		Message: message,
-//	}
-//}
+type ctx struct {
+	context.Context
+	awsRequestId string
+}
+
+func (ctx ctx) Value(any) any {
+	return &lambdacontext.LambdaContext{
+		AwsRequestID: ctx.awsRequestId,
+	}
+}
+
+func createContext() *ctx {
+	return &ctx{
+		awsRequestId: uuid.NewString(),
+	}
+}

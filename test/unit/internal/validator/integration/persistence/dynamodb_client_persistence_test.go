@@ -3,6 +3,7 @@ package persistence
 import (
 	"errors"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/application/config"
+	"github.com/brienze1/crypto-robot-validator/internal/validator/application/properties"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/adapters"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/domain/model"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/dto"
@@ -37,7 +38,7 @@ func clientPersistenceSetup() {
 	clientUnlocked = &model.Client{Id: uuid.NewString(), Locked: false}
 	clientLocked = &model.Client{Id: uuid.NewString(), Locked: true}
 
-	dynamoDBClient.AddItem(clientPersisted.Id, clientPersisted)
+	dynamoDBClient.AddItem(clientPersisted.Id, clientPersisted, properties.Properties().Aws.DynamoDB.ClientTableName)
 }
 
 func TestGetClientsSuccess(t *testing.T) {
@@ -91,7 +92,7 @@ func TestGetClientsUnmarshalFailure(t *testing.T) {
 	}
 	clientId := uuid.NewString()
 
-	dynamoDBClient.AddItem(clientId, fakeClient)
+	dynamoDBClient.AddItem(clientId, fakeClient, properties.Properties().Aws.DynamoDB.ClientTableName)
 
 	client, err := clientPersistence.GetClient(clientId)
 
@@ -107,7 +108,7 @@ func TestGetClientsUnmarshalFailure(t *testing.T) {
 func TestGetClientsClientLockedFailure(t *testing.T) {
 	clientPersistenceSetup()
 
-	dynamoDBClient.AddItem(clientLocked.Id, clientLocked)
+	dynamoDBClient.AddItem(clientLocked.Id, clientLocked, properties.Properties().Aws.DynamoDB.ClientTableName)
 
 	client, err := clientPersistence.GetClient(clientLocked.Id)
 

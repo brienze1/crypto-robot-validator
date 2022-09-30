@@ -136,19 +136,6 @@ func (r *redisServer) Teardown() {
 	r.server.Close()
 }
 
-func (r *redisServer) Reset() {
-	r.DelError = nil
-	r.SetError = nil
-	r.GetError = nil
-	r.OpenCounter = 0
-	r.OpenError = nil
-	r.CloseCounter = 0
-	r.CloseError = nil
-	r.server = nil
-	r.client = nil
-	r.createClient()
-}
-
 func (r *redisTestHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
 	if r.target == "before set" && strings.Contains(cmd.String(), r.match) && strings.Contains(cmd.String(), "set") {
 		return nil, r.action(r.client)
@@ -172,4 +159,17 @@ func (r *redisTestHook) BeforeProcessPipeline(ctx context.Context, _ []redis.Cmd
 
 func (r *redisTestHook) AfterProcessPipeline(context.Context, []redis.Cmder) error {
 	return nil
+}
+
+func (r *redisServer) Reset() {
+	r.DelError = nil
+	r.SetError = nil
+	r.GetError = nil
+	r.OpenCounter = 0
+	r.OpenError = nil
+	r.CloseCounter = 0
+	r.CloseError = nil
+	r.server = nil
+	r.client = nil
+	r.createClient()
 }

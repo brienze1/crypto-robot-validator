@@ -17,7 +17,9 @@ type secretsManager struct {
 }
 
 func SecretsManager() *secretsManager {
-	return &secretsManager{}
+	return &secretsManager{
+		secrets: map[string][]byte{},
+	}
 }
 
 func (s *secretsManager) GetSecretValue(_ context.Context, params *secretsmanager.GetSecretValueInput, _ ...func(*secretsmanager.Options)) (
