@@ -106,7 +106,7 @@ func biscointApiIsUp() error {
 	coinResponse, _ := json.Marshal(coin)
 	biscointApi.GetBalanceResponse = string(balanceResponse)
 	biscointApi.GetCryptoResponse = string(coinResponse)
-	properties.Properties().BiscointUrl = biscointApi.GetUrl()
+	properties.Properties().BiscointUrl = biscointApi.GetUrl() + "/"
 	return nil
 }
 

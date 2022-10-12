@@ -92,7 +92,7 @@ func (b *biscointWebService) GetBalance(clientId string, useSimulation bool) (*m
 	if useSimulation {
 		biscointUrl = b.simulationUrl
 	}
-	request, err := http.NewRequest(http.MethodGet, biscointUrl+b.biscointGetBalancePath, nil)
+	request, err := http.NewRequest(http.MethodPost, biscointUrl+b.biscointGetBalancePath, nil)
 	if err != nil {
 		return nil, b.abort(err, "Error while trying to generate Biscoint get request")
 	}
@@ -111,7 +111,7 @@ func (b *biscointWebService) GetBalance(clientId string, useSimulation bool) (*m
 	}(response.Body)
 
 	if response.StatusCode != http.StatusOK {
-		return nil, b.abort(err, "Biscoint API status code not Ok: "+response.Status)
+		return nil, b.abort(err, "Biscoint API status code not Ok: "+response.Status, response.Body)
 	}
 
 	var balanceResponse dto.BalanceResponse

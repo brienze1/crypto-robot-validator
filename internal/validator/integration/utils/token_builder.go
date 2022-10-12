@@ -6,6 +6,7 @@ import (
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/adapters"
 	"github.com/brienze1/crypto-robot-validator/internal/validator/integration/exceptions"
 	"github.com/brienze1/crypto-robot-validator/pkg/custom_error"
+	"strings"
 )
 
 type tokenBuilder struct {
@@ -28,7 +29,7 @@ func (t *tokenBuilder) Build(apiSecret string, endpoint string, payload any, non
 		return "", t.abort(err, "Payload marshal failed")
 	}
 
-	strToBeSigned := endpoint + nonce + string(payloadString)
+	strToBeSigned := endpoint + nonce + strings.ReplaceAll(string(payloadString), "\"", "")
 
 	t.logger.Info("Build finished", endpoint, payload, nonce, payloadString, strToBeSigned)
 	return t.encryptionService.SHA384Encrypt(strToBeSigned, apiSecret), nil

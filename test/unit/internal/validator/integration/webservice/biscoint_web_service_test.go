@@ -27,8 +27,8 @@ func setup() {
 	logger.Reset()
 	client.Reset()
 	client.SetupServer()
-	properties.Properties().BiscointUrl = client.GetUrl()
-	properties.Properties().SimulationUrl = client.GetUrl()
+	properties.Properties().BiscointUrl = client.GetUrl() + "/"
+	properties.Properties().SimulationUrl = client.GetUrl() + "/"
 	headerBuilder.Reset()
 
 	biscointWebService = webservice.BiscointWebService(logger, client, headerBuilder)
