@@ -46,5 +46,5 @@ services:
     entrypoint: >
       sh -c "sh /init-scripts/localstack/01-profile-creation.sh && 
       sh /init-scripts/lambda/01-wait-for-localstack.sh && 
-      sh /init-scripts/lambda/02-resources-creation.sh && 
+      sh /init-scripts/lambda/02-resources-creation-local.sh && 
       sh /init-scripts/lambda/03-test-data-creation.sh"

@@ -388,8 +388,8 @@ using GitHub actions. Local environment is created using localstack for testing 
 - [x] Implement Unit tests
 - [x] Implement application logic
 - [x] Create Dockerfile
-- [ ] Create Docker compose for local infrastructure
-- [ ] Add biscoint mock docker image to docker compose file
+- [x] Create Docker compose for local infrastructure
+- [x] Add biscoint mock docker image to docker compose file
 - [x] Document everything in Readme
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -446,17 +446,22 @@ topic used by this application to send the events.
 Obs: Make sure Docker is running before.
 
 - Start the required infrastructure via localstack using docker compose command:
-
     - Windows/macOS/Linux/WSL
-      ```bash
-      docker-compose -f ./build/local/docker-compose.yml up
-      ```
+        - Run the application as a local lambda with docker
+          ```bash
+          docker-compose -f ./build/local/docker-compose.yml up
+          ```
+
+        - Run the infrastructure with docker but run the application locally (on the IDE or using the binary)
+          ```bash
+          docker-compose -f ./build/local/docker-compose-local.yml up
+          ```
 
 - To stop localstack:
-    - Windows/macOS/Linux/WSL
-      ```bash
-      docker-compose -f ./build/local/docker-compose.yml down
-      ```
+    - Windows/macOS/Linux/WSL (Use docker-compose-local.yml if needed)
+        ```bash
+        docker-compose -f ./build/local/docker-compose.yml down
+        ```
 
 ### Usage
 
@@ -465,25 +470,23 @@ Obs: Make sure Docker is running before.
 - Start the compiled application locally:
     - Windows/macOS/Linux/WSL
       ```bash
-      go run cmd/local/main_local.go
+        VALIDATOR_ENV=development go run cmd/local/main_local.go 
       ```
+- To run the application like this the local infrastructure needs to be deployed using docker-compose-local.yml
 - To stop the application just press Ctrl+C
 
 #### Docker Input
 
-- In case you want to use a Docker container to run the application first you need to build the Docker image from
-  Dockerfile:
+- In case you want to use a Docker container to run the application first you need to deploy the local infrastructure
+  from docker-compose.tml file. This will build the docker image using the Dockerfile located in the root folder and
+  make it available as a lambda. After that you just need to send an event to the SNS topic subscribed using the
+  following command:
     - Windows/macOS/Linux/WSL
       ```bash
-      docker build -t crypto-robot-validator .
+        ./scripts/send_message_command.sh 
       ```
 
-- And then run the new created image:
-    - Windows/macOS/Linux/WSL
-      ```sh
-      docker run --network="host" -d -it crypto-robot-validator bash \
-      -c "VALIDATOR_ENV=localstack go run ./cmd/local/main_local.go"
-      ```
+- To run the application like this the local infrastructure needs to be deployed using docker-compose.yml
 
 ### Testing
 
