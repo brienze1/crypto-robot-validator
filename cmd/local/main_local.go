@@ -7,7 +7,6 @@ import (
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/brienze1/crypto-robot-validator/internal/validator"
 	"github.com/google/uuid"
-	"os"
 )
 
 type ctx struct {
@@ -22,8 +21,6 @@ func (ctx ctx) Value(any) any {
 }
 
 func main() {
-	_ = os.Setenv("VALIDATOR_ENV", "development")
-
 	ctx := createContext()
 	event := createSQSEvent()
 
