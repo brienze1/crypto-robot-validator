@@ -9,15 +9,15 @@ import (
 )
 
 type Operation struct {
-	Id        string                       `json:"operation_id"`
-	Status    status.Status                `json:"status"`
-	CreatedAt time.Time                    `json:"created_at"`
-	Locked    bool                         `json:"locked"`
-	Type      operation_type.OperationType `json:"type"`
-	Amount    float64                      `json:"amount"`
-	Base      symbol.Symbol                `json:"base"`
-	Quote     symbol.Symbol                `json:"quote"`
-	StopLoss  float64                      `json:"stop_loss"`
+	Id        string                       `dynamodbav:"operation_id"`
+	Status    status.Status                `dynamodbav:"status"`
+	CreatedAt time.Time                    `dynamodbav:"created_at"`
+	Locked    bool                         `dynamodbav:"locked"`
+	Type      operation_type.OperationType `dynamodbav:"type"`
+	Amount    float64                      `dynamodbav:"amount"`
+	Base      symbol.Symbol                `dynamodbav:"base"`
+	Quote     symbol.Symbol                `dynamodbav:"quote"`
+	StopLoss  float64                      `dynamodbav:"stop_loss"`
 }
 
 func OperationDto(operation *model.Operation) *Operation {

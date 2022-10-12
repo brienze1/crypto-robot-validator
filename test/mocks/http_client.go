@@ -36,9 +36,9 @@ func (h *httpClient) SetupServer() {
 	h.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(h.StatusCode)
 		var response []byte
-		if r.URL.Path == properties.Properties().BiscointGetBalancePath {
+		if r.URL.Path == "/"+properties.Properties().BiscointGetBalancePath {
 			response = []byte(h.GetBalanceResponse)
-		} else if r.URL.Path == properties.Properties().BiscointGetCryptoPath {
+		} else if r.URL.Path == "/"+properties.Properties().BiscointGetCryptoPath {
 			response = []byte(h.GetCryptoResponse)
 		}
 

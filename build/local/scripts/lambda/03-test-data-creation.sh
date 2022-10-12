@@ -20,11 +20,17 @@ aws dynamodb put-item \
               "locked": {
                 "BOOL": false
               },
+              "cash_available": {
+                "N": "10000.00"
+              },
               "cash_amount": {
                 "N": "1000.00"
               },
               "cash_reserved": {
                 "N": "0"
+              },
+              "crypto_available": {
+                "N": "1.000000"
               },
               "crypto_amount": {
                 "N": "1.000000"
@@ -52,6 +58,9 @@ aws dynamodb put-item \
               },
               "month_stop_loss": {
                 "N": "500"
+              },
+              "operation_amount_percentage": {
+                "N": "5.5"
               },
               "month_sell_cap": {
                 "N": "25000"

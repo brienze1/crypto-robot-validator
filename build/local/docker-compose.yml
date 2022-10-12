@@ -26,6 +26,15 @@ services:
       volumes:
         - ./lambda-files:/lambda-files
       entrypoint: sh -c "cp crypto-robot-validator.zip /lambda-files"
+  biscoint-mock:
+    container_name: biscoint-mock
+    depends_on:
+      - awscli
+    image: lfbrienze/biscoint-mock:latest
+    ports:
+      - "8080:8085"
+    entrypoint: >
+      sh -c "java -jar application/target/biscoint-mock.jar"
   awscli:
     depends_on:
       - crypto-robot-validator
