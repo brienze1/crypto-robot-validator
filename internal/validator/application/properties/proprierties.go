@@ -8,16 +8,16 @@ import (
 )
 
 type properties struct {
-	Profile                        string
-	MinimumCryptoSellOperation     float64
-	MinimumCryptoBuyOperation      float64
-	BiscointUrl                    string
-	SimulationUrl                  string
-	BiscointGetCryptoPath          string
-	BiscointGetBalancePath         string
-	CryptoOperationTriggerTopicArn string
-	Aws                            *aws
-	Cache                          *cache
+	Profile                         string
+	MinimumCryptoSellOperation      float64
+	MinimumCryptoBuyOperation       float64
+	BiscointUrl                     string
+	SimulationUrl                   string
+	BiscointGetCryptoPath           string
+	BiscointGetBalancePath          string
+	CryptoOperationExecutorTopicArn string
+	Aws                             *aws
+	Cache                           *cache
 }
 
 type cache struct {
@@ -81,7 +81,7 @@ func loadProperties() *properties {
 	biscointUrl := os.Getenv("BISCOINT_CRYPTO_URL")
 	biscointGetCryptoPath := os.Getenv("BISCOINT_CRYPTO_GET_CRYPTO_PATH")
 	biscointGetBalancePath := os.Getenv("BISCOINT_CRYPTO_GET_BALANCE_PATH")
-	cryptoOperationTriggerTopicArn := os.Getenv("AWS_SNS_TOPIC_ARN_CRYPTO_OPERATIONS")
+	cryptoOperationExecutorTopicArn := os.Getenv("AWS_SNS_TOPIC_ARN_CRYPTO_OPERATIONS")
 	awsRegion := os.Getenv("AWS_REGION")
 	awsURL := os.Getenv("AWS_URL")
 	awsAccessKey := os.Getenv("AWS_ACCESS_KEY")
@@ -97,14 +97,14 @@ func loadProperties() *properties {
 	cacheKeyPrefix := os.Getenv("CACHE_KEY_PREFIX")
 
 	return &properties{
-		Profile:                        profile,
-		MinimumCryptoSellOperation:     minimumCryptoSellOperation,
-		MinimumCryptoBuyOperation:      minimumCryptoBuyOperation,
-		SimulationUrl:                  biscointUrl,
-		BiscointUrl:                    biscointUrl,
-		BiscointGetCryptoPath:          biscointGetCryptoPath,
-		BiscointGetBalancePath:         biscointGetBalancePath,
-		CryptoOperationTriggerTopicArn: cryptoOperationTriggerTopicArn,
+		Profile:                         profile,
+		MinimumCryptoSellOperation:      minimumCryptoSellOperation,
+		MinimumCryptoBuyOperation:       minimumCryptoBuyOperation,
+		SimulationUrl:                   biscointUrl,
+		BiscointUrl:                     biscointUrl,
+		BiscointGetCryptoPath:           biscointGetCryptoPath,
+		BiscointGetBalancePath:          biscointGetBalancePath,
+		CryptoOperationExecutorTopicArn: cryptoOperationExecutorTopicArn,
 		Aws: &aws{
 			Config: &awsConfig{
 				Region:         awsRegion,

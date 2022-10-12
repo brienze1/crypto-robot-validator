@@ -384,12 +384,13 @@ using GitHub actions. Local environment is created using localstack for testing 
 
 ### Roadmap
 
-- [ ] Implement Behaviour tests (BDD)
-- [ ] Implement Unit tests
-- [ ] Implement application logic
+- [x] Implement Behaviour tests (BDD)
+- [x] Implement Unit tests
+- [x] Implement application logic
 - [x] Create Dockerfile
 - [ ] Create Docker compose for local infrastructure
-- [ ] Document everything in Readme
+- [ ] Add biscoint mock docker image to docker compose file
+- [x] Document everything in Readme
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
