@@ -36,7 +36,7 @@ func (s *snsEventService) Send(messageObject interface{}) custom_error.BaseError
 	payload := string(stringMessage)
 	publishInput := &sns.PublishInput{
 		Message:  &payload,
-		TopicArn: &properties.Properties().CryptoOperationTriggerTopicArn,
+		TopicArn: &properties.Properties().CryptoOperationExecutorTopicArn,
 	}
 
 	result, err := s.sns.Publish(context.TODO(), publishInput)

@@ -90,7 +90,7 @@ func TestSendSuccess(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, snsPublishCounter)
 	assert.Equal(t, payloadString, *snsPublishInput.Message)
-	assert.Equal(t, properties.Properties().CryptoOperationTriggerTopicArn, *snsPublishInput.TopicArn)
+	assert.Equal(t, properties.Properties().CryptoOperationExecutorTopicArn, *snsPublishInput.TopicArn)
 	assert.Equal(t, 2, loggerInfoCounter)
 	assert.Equal(t, 0, loggerErrorCounter)
 }
@@ -107,7 +107,7 @@ func TestSendPublishFailure(t *testing.T) {
 	assert.Equal(t, "Error while publishing SNS event", err.Description())
 	assert.Equal(t, 1, snsPublishCounter)
 	assert.Equal(t, payloadString, *snsPublishInput.Message)
-	assert.Equal(t, properties.Properties().CryptoOperationTriggerTopicArn, *snsPublishInput.TopicArn)
+	assert.Equal(t, properties.Properties().CryptoOperationExecutorTopicArn, *snsPublishInput.TopicArn)
 	assert.Equal(t, 1, loggerInfoCounter)
 	assert.Equal(t, 1, loggerErrorCounter)
 }

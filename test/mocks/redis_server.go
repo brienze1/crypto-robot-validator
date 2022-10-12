@@ -54,10 +54,9 @@ func (r *redisServer) createClient() adapters.RedisAdapter {
 
 	secretsManagerService := SecretsManagerService()
 	secretsManagerService.SetSecret(properties.Properties().Aws.SecretsManager.CacheSecretName, &dto.RedisSecrets{
-		Address:    server.Addr(),
-		Password:   "",
-		User:       "",
-		DatabaseId: 0,
+		Address:  server.Addr(),
+		Password: "",
+		User:     "",
 	})
 
 	client := config.RedisClient(secretsManagerService)

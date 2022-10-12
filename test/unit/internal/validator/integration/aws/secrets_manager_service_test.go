@@ -26,10 +26,9 @@ func setup() {
 	secretsManager.Reset()
 
 	secrets = dto.RedisSecrets{
-		Address:    uuid.NewString(),
-		Password:   uuid.NewString(),
-		User:       uuid.NewString(),
-		DatabaseId: 12345,
+		Address:  uuid.NewString(),
+		Password: uuid.NewString(),
+		User:     uuid.NewString(),
 	}
 
 	secretsManager.SetSecret("secretName", secrets)

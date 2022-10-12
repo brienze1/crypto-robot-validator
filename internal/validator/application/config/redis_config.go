@@ -35,7 +35,6 @@ func (r *redisClient) Open() (*redis.Client, error) {
 		Addr:         r.cacheConfig.Address,
 		Username:     r.cacheConfig.User,
 		Password:     r.cacheConfig.Password,
-		DB:           r.cacheConfig.DatabaseId,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 	})

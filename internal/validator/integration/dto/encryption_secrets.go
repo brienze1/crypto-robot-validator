@@ -1,5 +1,5 @@
 package dto
 
 type EncryptionSecrets struct {
-	EncryptionKey string
+	EncryptionKey string `json:"encryption_key"`
 }
