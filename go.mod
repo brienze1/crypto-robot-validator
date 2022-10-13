@@ -52,8 +52,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-//replace (
-//	github.com/gogo/protobuf v1.2.1 => github.com/gogo/protobuf v1.3.2
-//	github.com/miekg/dns v1.0.14 => github.com/miekg/dns v1.1.50
-//	github.com/prometheus/client_golang v0.9.3 => github.com/prometheus/client_golang v1.13.0
-//)
+replace (
+	github.com/gogo/protobuf v1.2.1 => github.com/gogo/protobuf v1.3.2
+	github.com/miekg/dns v1.0.14 => github.com/miekg/dns v1.1.50
+	github.com/prometheus/client_golang v0.9.3 => github.com/prometheus/client_golang v1.13.0
+)
