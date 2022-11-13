@@ -20,6 +20,6 @@ RUN apk add zip
 RUN apk add bash
 
 # zip the binary in the container
-RUN zip -r crypto-robot-validator.zip config validator
+#RUN zip -r crypto-robot-validator.zip config validator
 
 ENTRYPOINT []
