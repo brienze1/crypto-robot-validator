@@ -1,0 +1,233 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Crypto Robot Validator
+
+Parameters:
+  # DB config
+  ReadCapacityUnits:
+    Type: Number
+    Default: 5
+  WriteCapacityUnits:
+    Type: Number
+    Default: 5
+
+  # Tags
+  System:
+    Type: String
+    Default: 'crypto-robot'
+  Parent:
+    Type: String
+    Default: 'crypto-robot-validator'
+
+  # Lambda Env
+  ValidatorEnv:
+    Type: String
+    Default: 'localstack'
+
+Resources:
+  CryptoValidatorQueueDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: 'cryptoValidatorQueueDLQ'
+    Tags:
+      - Key: type
+        Value: sqs-dlq
+      - Key: system
+        Value: !Ref System
+      - Key: parent
+        Value: !Ref Parent
+
+  CryptoValidatorQueue:
+    Type: AWS::SQS::Queue
+    #    DependsOn: CryptoValidatorQueueDLQ
+    Properties:
+      QueueName: 'cryptoValidatorQueue'
+      VisibilityTimeout: 30
+      RedrivePolicy:
+        deadLetterTargetArn: !Sub ${CryptoValidatorQueueDLQ.Arn}
+        maxReceiveCount: 3
+    Tags:
+      - Key: type
+        Value: sqs
+      - Key: system
+        Value: !Ref System
+      - Key: parent
+        Value: !Ref Parent
+
+  CryptoOperationTriggerTopicToCryptoValidatorQueue:
+    Type: AWS::SNS::Subscription
+    #    DependsOn: CryptoValidatorQueue
+    Properties:
+      TopicArn: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:cryptoOperationTriggerTopic'
+      Endpoint: !Sub ${CryptoValidatorQueue.Arn}
+      Protocol: sqs
+      RawMessageDelivery: true
+    Tags:
+      - Key: type
+        Value: sns-subscription
+      - Key: system
+        Value: !Ref System
+      - Key: parent
+        Value: !Ref Parent
+
+  CryptoOperationExecutionTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: 'cryptoOperationExecutorTopic'
+    Tags:
+      - Key: type
+        Value: sns
+      - Key: system
+        Value: !Ref System
+      - Key: parent
+        Value: !Ref Parent
+
+  CryptoRobotOperationsDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: 'crypto_robot.operations'
+      AttributeDefinitions:
+        - AttributeName: 'operation_id'
+          AttributeType: 'S'
+      KeySchema:
+        - AttributeName: 'operation_id'
+          KeyType: 'HASH'
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref ReadCapacityUnits
+        WriteCapacityUnits: !Ref WriteCapacityUnits
+    Tags:
+      - Key: type
+        Value: table
+      - Key: system
+        Value: !Ref System
+      - Key: parent
+        Value: !Ref Parent
+
+  CryptoRobotCredentialsDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: 'crypto_robot.credentials'
+      AttributeDefinitions:
+        - AttributeName: 'client_id'
+          AttributeType: 'S'
+      KeySchema:
+        - AttributeName: 'client_id'
+          KeyType: 'HASH'
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref ReadCapacityUnits
+        WriteCapacityUnits: !Ref WriteCapacityUnits
+    Tags:
+      - Key: type
+        Value: table
+      - Key: system
+        Value: !Ref System
+      - Key: parent
+        Value: !Ref Parent
+
+  CryptoValidatorLambdaRole:
+    Type: AWS::IAM::Role
+    #    DependsOn:
+    #      - CryptoValidatorQueue
+    #      - CryptoOperationExecutionTopic
+    #      - CryptoRobotOperationsDynamoDBTable
+    #      - CryptoRobotCredentialsDynamoDBTable
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: '/'
+      Policies:
+        - PolicyName: logs
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+        - PolicyName: sqs
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                Resource: !Sub ${CryptoValidatorQueue.Arn}
+        - PolicyName: sns
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Sub ${CryptoOperationExecutionTopic.Arn}
+        - PolicyName: dynamodb
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:BatchGet*
+                  - dynamodb:DescribeTable
+                  - dynamodb:Get*
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:Delete*
+                  - dynamodb:Update*
+                  - dynamodb:PutItem
+                Resource:
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/crypto_robot.clients'
+                  - !Sub ${CryptoRobotOperationsDynamoDBTable.Arn}
+                  - !Sub ${CryptoRobotCredentialsDynamoDBTable.Arn}
+    Tags:
+      - Key: type
+        Value: role
+      - Key: system
+        Value: !Ref System
+      - Key: parent
+        Value: !Ref Parent
+
+  CryptoValidatorLambda:
+    Type: AWS::Lambda::Function
+    #    DependsOn: CryptoValidatorLambdaRole
+    Properties:
+      Runtime: go1.x
+      Role: !Sub ${CryptoValidatorLambdaRole.Arn}
+      Handler: ./validator
+      FunctionName: 'validatorLambda'
+      Code:
+        S3Bucket: lambda-functions
+        S3Key: crypto-robot-validator.zip
+      MemorySize: 128
+      Timeout: 60
+      Description: 'SQS Lambda handler for crypto-robot-validator.'
+      Environment:
+        Variables:
+          VALIDATOR_ENV: !Ref ValidatorEnv
+    Tags:
+      - Key: type
+        Value: lambda
+      - Key: system
+        Value: !Ref System
+      - Key: parent
+        Value: !Ref Parent
+
+  CryptoValidatorLambdaEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    #    DependsOn:
+    #      - CryptoValidatorQueue
+    #      - CryptoValidatorLambda
+    Properties:
+      BatchSize: 1
+      Enabled: true
+      EventSourceArn: !Sub ${CryptoValidatorQueue.Arn}
+      FunctionName: !Sub ${CryptoValidatorLambda.Arn}
+    Tags:
+      - Key: type
+        Value: event-source-mapping
+      - Key: system
+        Value: !Ref System
+      - Key: parent
+        Value: !Ref Parent

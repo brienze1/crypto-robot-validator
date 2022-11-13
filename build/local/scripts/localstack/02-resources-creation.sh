@@ -14,3 +14,11 @@ aws sns create-topic --name cryptoOperationTriggerTopic --endpoint-url http://lo
 
 echo "########### Listing SNS ###########"
 aws sns list-topics --endpoint-url http://localhost:4566
+
+echo "########### Creating DynamoDB 'crypto_robot.clients' table ###########"
+aws dynamodb create-table \
+--table-name crypto_robot.clients  \
+--attribute-definitions AttributeName=client_id,AttributeType=S \
+--key-schema AttributeName=client_id,KeyType=HASH \
+--provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+--endpoint-url=http://localstack:4566
