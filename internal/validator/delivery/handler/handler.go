@@ -29,26 +29,21 @@ func (h *handler) Handle(context context.Context, event events.SQSEvent) error {
 	h.logger.SetCorrelationID(ctx.AwsRequestID)
 	h.logger.Info("Event received", event, ctx)
 
-	snsMessage := &events.SNSEntity{}
-	if err := json.Unmarshal([]byte(event.Records[0].Body), snsMessage); err != nil {
-		return h.abort(err, "Error while trying to parse the SNS message")
-	}
-
 	operationRequestDto := &dto.OperationRequest{}
-	if err := json.Unmarshal([]byte(snsMessage.Message), operationRequestDto); err != nil {
-		return h.abort(err, "Error while trying to parse the operation request object")
+	if err := json.Unmarshal([]byte(event.Records[0].Body), operationRequestDto); err != nil {
+		return h.abort(err, "Error while trying to parse the SNS message", event)
 	}
 
 	if err := h.validationUseCase.Validate(operationRequestDto.ToModel()); err != nil {
-		return h.abort(err, "Error while trying to run ValidationUseCase")
+		return h.abort(err, "Error while trying to run ValidationUseCase", operationRequestDto)
 	}
 
 	h.logger.Info("Event succeeded", event, ctx)
 	return nil
 }
 
-func (h *handler) abort(err error, message string) custom_error.BaseErrorAdapter {
+func (h *handler) abort(err error, message string, metadata ...interface{}) custom_error.BaseErrorAdapter {
 	handlerError := exceptions.HandlerError(err, message)
-	h.logger.Error(handlerError, "Event failed: "+message)
+	h.logger.Error(handlerError, "Event failed: "+message, metadata)
 	return handlerError
 }

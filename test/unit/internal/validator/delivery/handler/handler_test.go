@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -79,27 +78,6 @@ func TestHandlerJsonSQSError(t *testing.T) {
 	assert.Equal(t, awsRequestIdExpected, logger.CorrelationId, "Logger correlationId is same as context awsRequestId")
 }
 
-func TestHandlerJsonSNSError(t *testing.T) {
-	setup()
-
-	ctx := ctx{}
-	event := *createSQSEvent()
-	snsMessage := createSNSEvent("")
-	snsMessageString, _ := json.Marshal(snsMessage)
-	event.Records[0].Body = string(snsMessageString)
-
-	var err = handlerImpl.Handle(ctx, event)
-
-	assert.NotNil(t, err, "Error should not be nil")
-	assert.Equal(t, "Error while trying to parse the operation request object", err.(custom_error.BaseErrorAdapter).InternalError())
-	assert.Equal(t, "Error occurred while handling the event", err.(custom_error.BaseErrorAdapter).Description())
-	assert.Equal(t, "unexpected end of JSON input", err.(custom_error.BaseErrorAdapter).Error())
-	assert.Equal(t, 0, validationUseCase.ValidateCallCounter, "validationUseCase should not be called")
-	assert.Equal(t, 1, logger.InfoCallCounter, "logger info should be called once")
-	assert.Equal(t, 1, logger.ErrorCallCounter, "logger exceptions should be called once")
-	assert.Equal(t, awsRequestIdExpected, logger.CorrelationId, "Logger correlationId is same as context awsRequestId")
-}
-
 func TestHandlerOperationUseCaseError(t *testing.T) {
 	setup()
 
@@ -128,19 +106,11 @@ func createSQSEvent() *events.SQSEvent {
 	  "start_time": "2022-09-17T12:05:07.45066-03:00"
 	}`
 
-	snsEventMessage, _ := json.Marshal(createSNSEvent(operationRequest))
-
 	return &events.SQSEvent{
 		Records: []events.SQSMessage{
 			{
-				Body: string(snsEventMessage),
+				Body: operationRequest,
 			},
 		},
-	}
-}
-
-func createSNSEvent(message string) events.SNSEntity {
-	return events.SNSEntity{
-		Message: message,
 	}
 }

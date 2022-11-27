@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/brienze1/crypto-robot-validator/internal/validator"
@@ -44,19 +43,11 @@ func createSQSEvent() events.SQSEvent {
 	  "start_time": "2022-09-17T12:05:07.45066-03:00"
 	}`
 
-	snsEventMessage, _ := json.Marshal(createSNSEvent(operationMessage))
-
 	return events.SQSEvent{
 		Records: []events.SQSMessage{
 			{
-				Body: string(snsEventMessage),
+				Body: operationMessage,
 			},
 		},
-	}
-}
-
-func createSNSEvent(message string) events.SNSEntity {
-	return events.SNSEntity{
-		Message: message,
 	}
 }

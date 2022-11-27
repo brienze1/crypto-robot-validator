@@ -21,15 +21,15 @@ services:
     ports:
       - "6379:6379"
   crypto-robot-validator:
-      container_name: validator-lambda
-      build:
-        context: ../../../crypto-robot-validator
-        dockerfile: Dockerfile
-      volumes:
-        - ./lambda-files:/lambda-files
-      entrypoint: >
-        sh -c "zip -r crypto-robot-validator.zip config validator &&
-        cp crypto-robot-validator.zip /lambda-files"
+    container_name: validator-lambda
+    build:
+      context: ../../../crypto-robot-validator
+      dockerfile: Dockerfile
+    volumes:
+      - ./lambda-files:/lambda-files
+    entrypoint: >
+      sh -c "zip -r crypto-robot-validator.zip config validator &&
+      cp crypto-robot-validator.zip /lambda-files"
   biscoint-mock:
     container_name: validator_biscoint-mock
     image: lfbrienze/biscoint-mock:latest
