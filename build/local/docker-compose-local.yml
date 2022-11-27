@@ -2,6 +2,7 @@ version: "3"
 
 services:
   localstack:
+    container_name: validator_local_localstack
     image: localstack/localstack
     ports:
       - '4566-4597:4566-4597'
@@ -13,27 +14,31 @@ services:
       - ./scripts/localstack:/docker-entrypoint-initaws.d
       - /var/run/docker.sock:/var/run/docker.sock
   redis:
+    container_name: validator_local_redis
     image: redis
     command: redis-server --requirepass password123
     hostname: redis
     ports:
       - "6379:6379"
   crypto-robot-validator:
-      container_name: validator-lambda
-      build:
-        context: ../../../crypto-robot-validator
-        dockerfile: Dockerfile
-      volumes:
-        - ./lambda-files:/lambda-files
-      entrypoint: sh -c "cp crypto-robot-validator.zip /lambda-files"
+    container_name: validator_local-lambda
+    build:
+      context: ../../../crypto-robot-validator
+      dockerfile: Dockerfile
+    volumes:
+      - ./lambda-files:/lambda-files
+    entrypoint: >
+      sh -c "zip -r crypto-robot-validator.zip config validator &&
+      cp crypto-robot-validator.zip /lambda-files"
   biscoint-mock:
-    container_name: biscoint-mock
+    container_name: validator_local_biscoint-mock
     image: lfbrienze/biscoint-mock:latest
     ports:
       - "8080:8080"
     entrypoint: >
       sh -c "java -jar application/target/biscoint-mock.jar"
   awscli:
+    container_name: validator_local_awscli
     depends_on:
       - crypto-robot-validator
     image: amazon/aws-cli:latest
@@ -41,6 +46,7 @@ services:
       - ./lambda-files:/lambda-files
       - ./scripts/localstack:/init-scripts/localstack
       - ./scripts/lambda:/init-scripts/lambda
+      - ./cloudformation:/cloudformation
     entrypoint: >
       sh -c "sh /init-scripts/localstack/01-profile-creation.sh && 
       sh /init-scripts/lambda/01-wait-for-localstack.sh && 

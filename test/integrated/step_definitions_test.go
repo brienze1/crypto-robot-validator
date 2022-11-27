@@ -212,20 +212,12 @@ func processShouldExitWith(status int) error {
 }
 
 func createSQSEvent(message string) events.SQSEvent {
-	snsEventMessage, _ := json.Marshal(createSNSEvent(message))
-
 	return events.SQSEvent{
 		Records: []events.SQSMessage{
 			{
-				Body: string(snsEventMessage),
+				Body: message,
 			},
 		},
-	}
-}
-
-func createSNSEvent(message string) events.SNSEntity {
-	return events.SNSEntity{
-		Message: message,
 	}
 }
 
